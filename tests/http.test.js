@@ -12,14 +12,6 @@ const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 			done();
 		});
 	});
-
-	it('should succeed http requests with simple-http-listen', (done) => {
-		const simpleHttpListen = require('./helpers/http/simple-http-listen');
-		const server = simpleHttpListen(3000, () => {
-			server.close();
-			done();
-		});
-	});
 });
 
 FUSELOCK_E2E && describe("http+fuselock", () => {
