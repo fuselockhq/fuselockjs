@@ -10,10 +10,6 @@ export interface Permissions {
 		http?: {
 			allow?: string[];
 			deny?: string[];
-		},
-		https?: {
-			allow?: string[];
-			deny?: string[];
 		}
 	}
 }
