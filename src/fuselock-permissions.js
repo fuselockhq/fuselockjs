@@ -15,10 +15,9 @@ const createPermissions = (p) => {
 
 	/**
 	 * @param {string} host
-	 * @param {string[]} packages
 	 * @returns {boolean}
 	 */
-	const isHttpRequestAllowed = (host, packages) => {
+	const isHttpRequestAllowed = (host) => {
 		if (permissions == null) {
 			// no permissions defined, allow all
 			return true;
@@ -33,7 +32,7 @@ const createPermissions = (p) => {
 
 		const oneAllow = allowlist.some(allow => hostmatch(allow, host));
 		if (!oneAllow) {
-			trace(`None of these packages have permissions to make http requests to ${host}: ${packages.join(",")}`);
+			trace(`Host ${host} denied because there is not a single permission to allow this`);
 			return false;
 		}
 
@@ -48,28 +47,26 @@ const createPermissions = (p) => {
 	};
 
 	/**
-	 * @param {string[]} packages
 	 * @returns {boolean}
 	 */
-	const isFunctionConstructorAllowed = (packages) => {
+	const isFunctionConstructorAllowed = () => {
 		// TODO: FIXME
 		return true;
 	};
 
 	/**
 	 * @param {string} command
-	 * @param {string[]} packages
 	 * @returns {boolean}
 	 */
-	const isExecAllowed = (command, packages) => {
+	const isExecAllowed = (command) => {
 		if (permissions == null) {
 			// no permissions defined, allow all
 			return true;
 		}
 
 		if (permissions.permissions.exec?.allow) {
-			for (const packageName of ["*", ...packages]) {
-				if (permissions.permissions.exec.allow.includes(packageName)) {
+			for (const allowedCommand of permissions.permissions.exec.allow) {
+				if (command == allowedCommand) {
 					return true;
 				}
 			}
