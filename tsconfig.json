@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"allowJs": true,
+		"checkJs": true,
+		"noEmit": true,
+		"strict": true,
+		"types": [
+			"node"
+		],
+		"moduleResolution": "node",
+		"declaration": true,
+		"declarationMap": true
+	},
+	"include": [
+		"src/**/*.js",
+		"src/**/*.d.ts"
+	]
+}

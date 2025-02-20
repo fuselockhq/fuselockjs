@@ -1,0 +1,57 @@
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [14.x, 16.x, 18.x, 19.x, 20.x, 21.x, 22.x, 23.x]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Update packages
+      run: sudo apt-get -qq update && sudo apt-get install -y -qq curl
+
+    - name: Install dependencies
+      run: npm install --save-dev
+
+    - name: jshint
+      run: |
+        npm run jshint || true
+
+#    - name: Bearer
+#      uses: bearer/bearer-action@v2
+
+    - name: Run tests on Linux
+      if: runner.os == 'Linux'
+      run: |
+        # test without fuselock
+        FUSELOCK_E2E=0 npm test
+
+        # test with fuselock
+        FUSELOCK_E2E=1 npm run coverage
+
+    - name: Run tests on Windows
+      if: runner.os == 'Windows'
+      run: |
+        # test without fuselock
+        $env:FUSELOCK_E2E=0; $env:NODE_OPTIONS=""; npm test
+
+        # test with fuselock
+        $env:FUSELOCK_E2E=1; $env:NODE_OPTIONS="--require ./src/fuselock.js"; npm test
+

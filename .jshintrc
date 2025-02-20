@@ -1,0 +1,7 @@
+{
+  "esversion": 11,
+  "camelcase": true,
+  "curly": true,
+  "mocha": true,
+  "node": false
+}

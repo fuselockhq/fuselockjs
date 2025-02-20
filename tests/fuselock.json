@@ -1,0 +1,19 @@
+{
+	"version": 1,
+	"permissions": {
+		"http": {
+			"allow": [
+				"*"
+			],
+			"deny": [
+				"google.com",
+				"www.google.com"
+			]
+		},
+		"exec": {
+			"allow": [
+				"/bin/echo"
+			]
+		}
+	}
+}
