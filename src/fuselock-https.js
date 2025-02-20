@@ -9,12 +9,6 @@ module.exports = (permissionsModel) => {
 	const {trace} = require("./fuselock-log");
 	const {getCallingPackages, hookMethod, makeSimpleErrorEventEmitter} = require("./fuselock-utils");
 
-	hookMethod(https.Server.prototype, 'listen', (originalMethod, args) => {
-		const port = args[0] || 0;
-		trace(`[https] HTTPS server is listening on port: ${port}`);
-		return originalMethod.apply(this, args);
-	});
-
 	// function request(options: RequestOptions | string | URL, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;
 	// function request(url: string | URL, options: RequestOptions, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;
 	hookMethod(https, 'request', (originalMethod, args) => {
