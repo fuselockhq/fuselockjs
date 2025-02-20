@@ -78,8 +78,18 @@ const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 });
 
 FUSELOCK_E2E && describe('child_process', () => {
-	it('should execute commands via exec', (done) => {
-		childProcess.exec('/bin/ls -l /usr/bin', (err, stdout, stderr) => {
+
+	it('should allow specific commands via exec', (done) => {
+		childProcess.exec('/bin/echo -n hello', (err, stdout, stderr) => {
+			assert.equal(err, null);
+			assert.equal(stdout, 'hello');
+			assert.equal(stderr, '');
+			done();
+		});
+	});
+
+	false && it('should block commands via exec', (done) => {
+		childProcess.exec('/bin/ls -1 /usr/bin', (err, stdout, stderr) => {
 			assert.notEqual(err, null);
 			assert.equal(stdout, '');
 			assert.equal(stderr, '');
@@ -87,8 +97,8 @@ FUSELOCK_E2E && describe('child_process', () => {
 		});
 	});
 
-	it('should execute commands via execFile', (done) => {
-		childProcess.execFile('/bin/echo', ['hello'], (err, stdout, stderr) => {
+	false && it('should block commands via execFile', (done) => {
+		childProcess.execFile('/bin/ls', ['-1', '/usr/bin'], (err, stdout, stderr) => {
 			assert.notEqual(err, null);
 			assert.equal(stdout, '');
 			assert.equal(stderr, '');

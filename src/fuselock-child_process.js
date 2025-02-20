@@ -17,16 +17,16 @@ module.exports = (permissionsModel) => {
 			return originalMethod.apply(this, args);
 		}
 
-		const allowed = permissionsModel.isExecAllowed(command, getCallingPackages());
+		const commandArguments = command.split(" ");
+		const executable = commandArguments[0];
+		const allowed = permissionsModel.isExecAllowed(executable, getCallingPackages());
 		trace(`[child_process] Executing command: ${command} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
-			const commandArguments = command.split(" ");
-			const executable = commandArguments[0];
 			const error = new Error(`${executable}: No such file or directory`);
-			if (args.length >= 1 && args[args.length -1]) {
-				const callback = args[args.length -1];
-				if (callback instanceof Function && callback) {
+			if (args.length >= 1) {
+				const callback = args[args.length - 1];
+				if (callback && callback instanceof Function) {
 					callback(error, '', '');
 					// FIXME: must be event emitter
 					return null;
@@ -42,7 +42,14 @@ module.exports = (permissionsModel) => {
 
 	hookMethod(childProcess, 'execSync', (originalMethod, args) => {
 		const command = args[0];
-		const allowed = permissionsModel.isExecAllowed(command, getCallingPackages());
+		if (command === null || command === undefined) {
+			// let the original method throw an exception
+			return originalMethod.apply(this, args);
+		}
+
+		const commandArguments = command.split(" ");
+		const executable = commandArguments[0];
+		const allowed = permissionsModel.isExecAllowed(executable, getCallingPackages());
 		trace(`[child_process] Executing command: ${command} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
@@ -53,16 +60,40 @@ module.exports = (permissionsModel) => {
 	});
 
 	hookMethod(childProcess, 'execFile', (originalMethod, args) => {
-		const file = args[0];
-		const allowed = permissionsModel.isExecAllowed(file, getCallingPackages());
-		trace(`[child_process] Executing file: ${file} ` + (allowed ? "✅" : "❌"));
+		const command = args[0];
+		if (command === null || command === undefined) {
+			// let the original method throw an exception
+			return originalMethod.apply(this, args);
+		}
+
+		// exec and execFile are the same if options.shell is true
+		let isShell = false;
+		if (args.length >= 1) {
+			if (typeof args[1] === 'object') {
+				isShell = args[1] && args[1].shell;
+			} else if (args.length >= 2) {
+				// could be that args[1] is an array of args, and args[2] is the options
+				isShell = args[2] && args[2].shell;
+			}
+		}
+
+		let executable = command;
+		if (isShell) {
+			// if shell is true, then we need to parse out the executable from the command
+			const commandArguments = command.split(" ");
+			executable = commandArguments[0];
+		}
+
+		const allowed = permissionsModel.isExecAllowed(executable, getCallingPackages());
+		trace(`[child_process] Executing file: ${executable} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
-			if (args.length >= 1 && args[args.length - 1] instanceof Function) {
-				trace("last argument is a callback");
+			if (args.length >= 1) {
 				const callback = args[args.length - 1];
-				const error = new Error(`[child_process] Blocked execFile: ${file}`);
-				callback(error, '', '');
+				if (callback && callback instanceof Function) {
+					const error = new Error(`[child_process] Blocked execFile: ${file}`);
+					callback(error, '', '');
+				}
 			}
 
 			const result = new childProcess.ChildProcess();
