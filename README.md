@@ -3,7 +3,6 @@
   <h3>🔒 A Node.js Runtime Security Layer</h3>
   <h4>Secure your Node.js applications by intercepting and restricting OS operations at runtime</h4>
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14-brightgreen)](https://nodejs.org)
   [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
