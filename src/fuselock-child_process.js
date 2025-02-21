@@ -91,7 +91,7 @@ module.exports = (permissionsModel) => {
 			if (args.length >= 1) {
 				const callback = args[args.length - 1];
 				if (callback && callback instanceof Function) {
-					const error = new Error(`[child_process] Blocked execFile: ${file}`);
+					const error = new Error(`[child_process] Blocked execFile: ${executable}`);
 					callback(error, '', '');
 				}
 			}
