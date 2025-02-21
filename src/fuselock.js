@@ -31,6 +31,21 @@
 		'child_process': hookChildProcess,
 	};
 
+	/**
+	 * @param {string} path
+	 * @returns {PermissionsModel}
+	 */
+	const getPermissionsForPath = (path) => {
+		if (fs.existsSync(path)) {
+			const json = JSON.parse(fs.readFileSync(path, "utf8"));
+			const model = createPermissions(json);
+			trace("[fuselock] loaded json from " + path + " into " + JSON.stringify(json));
+			return wrapPermissions(model);
+		}
+
+		return null;
+	}
+
 	/** @type {PermissionsModel} */
 	const globalPermissionsModel = {
 
@@ -40,21 +55,11 @@
 		 */
 		isExecAllowed: (command, packages) => {
 			trace("[http] Checking isExecAllowed for " + command + " with packages " + packages.join(','));
-			for (const dirname of packages) {
-				const url = path.join(dirname, "fuselock.json");
-				if (fs.existsSync(url)) {
-					const json = JSON.parse(fs.readFileSync(url, "utf8"));
-					const model1 = createPermissions(json);
-					const model = wrapPermissions(model1);
-					trace("[fuselock] loaded json from " + url + " into " + JSON.stringify(json));
-					if (!model.isExecAllowed(command, packages)) {
-						return false;
-					}
-				}
-			}
-
-			// approved by all packages in stack trace
-			return true;
+			return packages
+				.map(package => path.join(package, "fuselock.json"))
+				.map(path => getPermissionsForPath(path))
+				.filter(model => model !== null)
+				.every(model => model.isExecAllowed(command, packages));
 		},
 
 		/**
@@ -63,21 +68,11 @@
 		 */
 		isHttpRequestAllowed: (host, packages) => {
 			trace("[http] Checking isHttpRequestAllowed for " + host + " with packages " + packages.join(','));
-			for (const dirname of packages) {
-				const url = path.join(dirname, "fuselock.json");
-				if (fs.existsSync(url)) {
-					const json = JSON.parse(fs.readFileSync(url, "utf8"));
-					const model1 = createPermissions(json);
-					const model = wrapPermissions(model1);
-					trace("[fuselock] loaded json from " + url + " into " + JSON.stringify(json));
-					if (!model.isHttpRequestAllowed(host, packages)) {
-						return false;
-					}
-				}
-			}
-
-			// approved by all packages in stack trace
-			return true;
+			return packages
+				.map(package => path.join(package, "fuselock.json"))
+				.map(path => getPermissionsForPath(path))
+				.filter(model => model !== null)
+				.every(model => model.isHttpRequestAllowed(host, packages));
 		},
 
 		/**
