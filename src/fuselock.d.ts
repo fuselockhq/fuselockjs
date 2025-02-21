@@ -4,9 +4,6 @@ export interface Permissions {
 		exec?: {
 			allow?: string[];
 		},
-		function?: {
-			allow: boolean
-		},
 		http?: {
 			allow?: string[];
 			deny?: string[];
