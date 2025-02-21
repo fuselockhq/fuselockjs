@@ -74,13 +74,6 @@
 				.filter(model => model !== null)
 				.every(model => model.isHttpRequestAllowed(host, packages));
 		},
-
-		/**
-		 * @param {string[]} packages
-		 */
-		isFunctionConstructorAllowed: (packages) => {
-			return true;
-		},
 	};
 
 	const hookModule = () => {

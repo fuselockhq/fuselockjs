@@ -78,17 +78,9 @@ const wrapPermissions = (permissionsModel) => {
 		return result;
 	};
 
-	/** @param {string[]} packages */
-	const isFunctionConstructorAllowed = (packages) => {
-		const result = permissionsModel.isFunctionConstructorAllowed(packages);
-		report("eval", packages, result, {});
-		return result;
-	};
-
 	return {
 		isExecAllowed,
 		isHttpRequestAllowed,
-		isFunctionConstructorAllowed,
 	};
 };
 

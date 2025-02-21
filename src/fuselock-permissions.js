@@ -47,14 +47,6 @@ const createPermissions = (p) => {
 	};
 
 	/**
-	 * @returns {boolean}
-	 */
-	const isFunctionConstructorAllowed = () => {
-		// TODO: FIXME
-		return true;
-	};
-
-	/**
 	 * @param {string} command
 	 * @returns {boolean}
 	 */
@@ -78,7 +70,6 @@ const createPermissions = (p) => {
 	return {
 		isExecAllowed,
 		isHttpRequestAllowed,
-		isFunctionConstructorAllowed,
 	};
 };
 

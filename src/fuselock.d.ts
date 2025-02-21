@@ -17,6 +17,5 @@ export interface Permissions {
 export interface PermissionsModel {
 	isExecAllowed(command: string, packages: string[]): boolean;
 	isHttpRequestAllowed(host: string, packages: string[]): boolean;
-	isFunctionConstructorAllowed(packages: string[]): boolean;
 }
 
