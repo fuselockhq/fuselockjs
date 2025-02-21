@@ -23,15 +23,11 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		// logic:
-		// 1. one (or more) of the allow list match
-		// 2. none of the deny list match
-		const allowlist = permissions.permissions.http?.allow || [];
-		const denylist = permissions.permissions.http?.deny || [];
+		const allowlist = permissions.permissions?.http?.allow || [];
+		const denylist = permissions.permissions?.http?.deny || [];
 		trace("[http] this is the allow list: " + JSON.stringify(allowlist) + " and deny list: " + JSON.stringify(denylist));
 
-		const oneAllow = allowlist.some(allow => hostmatch(allow, host));
-		if (!oneAllow) {
+		if (!allowlist.some(allow => hostmatch(allow, host))) {
 			trace(`Host ${host} denied because there is not a single permission to allow this`);
 			return false;
 		}
@@ -56,7 +52,7 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		if (permissions.permissions.exec?.allow) {
+		if (permissions.permissions?.exec?.allow) {
 			for (const allowedCommand of permissions.permissions.exec.allow) {
 				if (command == allowedCommand) {
 					return true;
