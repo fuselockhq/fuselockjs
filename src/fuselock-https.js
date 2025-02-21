@@ -17,7 +17,7 @@ module.exports = (permissionsModel) => {
 			host = args[0]?.hostname || args[0]?.host;
 		}
 
-		trace('[https] HTTPS request made: ' + host + " arguments: " + JSON.stringify(args));
+		trace('[https] request made: ' + host + " arguments: " + JSON.stringify(args));
 
 		if (!permissionsModel.isHttpRequestAllowed(host || "", getCallingPackages())) {
 			return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
@@ -34,7 +34,7 @@ module.exports = (permissionsModel) => {
 			host = args[0]?.hostname || args[0]?.host;
 		}
 
-		trace('[https] HTTPS get made: ' + host + " arguments: " + JSON.stringify(args));
+		trace('[https] get request made: ' + host + " arguments: " + JSON.stringify(args));
 
 		if (!permissionsModel.isHttpRequestAllowed(host || "", getCallingPackages())) {
 			return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
