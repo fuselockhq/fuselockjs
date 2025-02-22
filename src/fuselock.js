@@ -44,7 +44,7 @@
 		}
 
 		return null;
-	}
+	};
 
 	/** @type {PermissionsModel} */
 	const globalPermissionsModel = {
