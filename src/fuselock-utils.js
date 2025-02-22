@@ -1,39 +1,32 @@
 const path = require("path");
 const {EventEmitter} = require("events");
-const { nextTick } = require("process");
+const {nextTick} = require("process");
 
 /** @returns {string[]} */
 const getCallingPackages = () => {
-
-	/** @type {string[]} */
-	const paths = [];
-
-	getStackTrace()
+	return getStackTrace()
 		// remove getCallingPackages()
 		.slice(1)
+		// get rid of CallSite and use source url
 		.map(callSite => callSite.getScriptNameOrSourceURL())
 		// remove anonymous code
 		.filter(sourceUrl => sourceUrl != null)
 		// remove internal packages
 		.filter(sourceUrl => !sourceUrl.startsWith("node:") && !sourceUrl.startsWith("internal/"))
-		.forEach(sourceUrl => {
-			let dirname;
+		// get actual package path
+		.map(sourceUrl => {
 			const items = sourceUrl.split(path.sep);
 			const p = items.lastIndexOf("node_modules");
 			if (p >= 0) {
 				// this source file is part of a module, we'll return the path to the (nested) node_modules
-				dirname = items.slice(0, p + 2).join(path.sep);
+				return  items.slice(0, p + 2).join(path.sep);
 			} else {
 				// this source file is just a file on disk (for example an index.js or a test script loaded)
-				dirname = path.dirname(sourceUrl);
+				return path.dirname(sourceUrl);
 			}
-
-			if (!paths.includes(dirname)) {
-				paths.push(dirname);
-			}
-		});
-
-	return paths;
+		})
+		// make array unique
+		.filter((value, index, self) => self.indexOf(value) === index);
 };
 
 /** @returns {NodeJS.CallSite[]} */
