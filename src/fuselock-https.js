@@ -7,7 +7,7 @@ module.exports = (permissionsModel) => {
 
 	const https = require('https');
 	const {trace} = require("./fuselock-log");
-	const {getCallingPackages, hookMethod, makeSimpleErrorEventEmitter} = require("./fuselock-utils");
+	const {hookMethod, makeSimpleErrorEventEmitter, getStackTrace} = require("./fuselock-utils");
 
 	// function request(options: RequestOptions | string | URL, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;
 	// function request(url: string | URL, options: RequestOptions, callback?: (res: http.IncomingMessage) => void): http.ClientRequest;
@@ -19,7 +19,7 @@ module.exports = (permissionsModel) => {
 
 		trace('[https] request made: ' + host + " arguments: " + JSON.stringify(args));
 
-		if (!permissionsModel.isHttpRequestAllowed(host || "", getCallingPackages())) {
+		if (!permissionsModel.isHttpRequestAllowed(host || "", getStackTrace())) {
 			return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
 		}
 
@@ -36,7 +36,7 @@ module.exports = (permissionsModel) => {
 
 		trace('[https] get request made: ' + host + " arguments: " + JSON.stringify(args));
 
-		if (!permissionsModel.isHttpRequestAllowed(host || "", getCallingPackages())) {
+		if (!permissionsModel.isHttpRequestAllowed(host || "", getStackTrace())) {
 			return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
 		}
 

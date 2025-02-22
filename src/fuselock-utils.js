@@ -2,11 +2,12 @@ const path = require("path");
 const {EventEmitter} = require("events");
 const {nextTick} = require("process");
 
-/** @returns {string[]} */
-const getCallingPackages = () => {
-	return getStackTrace()
-		// remove getCallingPackages()
-		.slice(1)
+/**
+ * @param {NodeJS.CallSite[]} stacktrace
+ * @returns {string[]}
+ */
+const getCallingPackages = (stacktrace) => {
+	return stacktrace
 		// get rid of CallSite and use source url
 		.map(callSite => callSite.getScriptNameOrSourceURL())
 		// remove anonymous code
@@ -19,7 +20,7 @@ const getCallingPackages = () => {
 			const p = items.lastIndexOf("node_modules");
 			if (p >= 0) {
 				// this source file is part of a module, we'll return the path to the (nested) node_modules
-				return  items.slice(0, p + 2).join(path.sep);
+				return items.slice(0, p + 2).join(path.sep);
 			} else {
 				// this source file is just a file on disk (for example an index.js or a test script loaded)
 				return path.dirname(sourceUrl);

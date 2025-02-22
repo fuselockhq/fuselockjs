@@ -6,7 +6,7 @@
 module.exports = (permissionsModel) => {
 	const http = require('http');
 	const {trace} = require("./fuselock-log");
-	const {getCallingPackages, hookMethod, makeSimpleErrorEventEmitter} = require("./fuselock-utils");
+	const {hookMethod, makeSimpleErrorEventEmitter, getStackTrace} = require("./fuselock-utils");
 
 	/**
 	 * @param {any | string} arg
@@ -24,7 +24,7 @@ module.exports = (permissionsModel) => {
 	// function request(url: string | URL, options: RequestOptions,	callback?: (res: IncomingMessage) => void): ClientRequest;
 	hookMethod(http, 'request', (originalMethod, args) => {
 		const host = getUrlFromRequest(args[0]);
-		const allowed = permissionsModel.isHttpRequestAllowed(host, getCallingPackages());
+		const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 		trace('[http] request made to host ' + host + " " + (allowed ? "✅" : "❌"));
 		if (!allowed) {
 			const request = makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
@@ -38,7 +38,7 @@ module.exports = (permissionsModel) => {
 	// function get(url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
 	hookMethod(http, 'get', (originalMethod, args) => {
 		const host = getUrlFromRequest(args[0]);
-		const allowed = permissionsModel.isHttpRequestAllowed(host, getCallingPackages());
+		const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 		trace('[http] get request made to host ' + host + " " + (allowed ? "✅" : "❌"));
 		if (!allowed) {
 			return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);

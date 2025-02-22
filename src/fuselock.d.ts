@@ -12,7 +12,7 @@ export interface Permissions {
 }
 
 export interface PermissionsModel {
-	isExecAllowed(command: string, packages: string[]): boolean;
-	isHttpRequestAllowed(host: string, packages: string[]): boolean;
+	isExecAllowed(command: string, stackTrace: NodeJS.CallSite[]): boolean;
+	isHttpRequestAllowed(host: string, stackTrace: NodeJS.CallSite[]): boolean;
 }
 

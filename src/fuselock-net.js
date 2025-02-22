@@ -10,7 +10,7 @@ const {nextTick} = require('process');
 module.exports = (permissionsModel) => {
 	const net = require('net');
 	const {trace} = require("./fuselock-log");
-	const {getCallingPackages, hookPrototypeMethod} = require("./fuselock-utils");
+	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
 
 	// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
 	// connect(port: number, host: string, connectionListener?: () => void): this;
@@ -49,7 +49,7 @@ module.exports = (permissionsModel) => {
 
 			return thisArg;
 		} else {
-			const allowed = permissionsModel.isHttpRequestAllowed(host, getCallingPackages());
+			const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 			trace(`[net] Connecting to ${host}:${port} ` + (allowed ? "✅" : "❌"));
 			if (!allowed) {
 				const message = `getaddrinfo ENOTFOUND ${host}`;

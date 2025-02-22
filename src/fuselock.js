@@ -5,7 +5,8 @@
 	const {createPermissions} = require('./fuselock-permissions');
 	const {wrapPermissions} = require('./fuselock-report');
 	const {trace, LOG_LEVEL_WARN, setLogLevel} = require('./fuselock-log');
-
+	const {getCallingPackages} = require('./fuselock-utils');
+	
 	const fs = require("fs");
 	const path = require("path");
 	const module = require('module');
@@ -51,28 +52,30 @@
 
 		/**
 		 * @param {string} command
-		 * @param {string[]} packages
+		 * @param {NodeJS.CallSite[]} stackTrace
 		 */
-		isExecAllowed: (command, packages) => {
+		isExecAllowed: (command, stackTrace) => {
+			const packages = getCallingPackages(stackTrace);
 			trace("[http] Checking isExecAllowed for " + command + " with packages " + packages.join(','));
 			return packages
 				.map(package => path.join(package, "fuselock.json"))
 				.map(path => getPermissionsForPath(path))
 				.filter(model => model !== null)
-				.every(model => model.isExecAllowed(command, packages));
+				.every(model => model.isExecAllowed(command, stackTrace));
 		},
 
 		/**
 		 * @param {string} host
-		 * @param {string[]} packages
+		 * @param {NodeJS.CallSite[]} stackTrace
 		 */
-		isHttpRequestAllowed: (host, packages) => {
+		isHttpRequestAllowed: (host, stackTrace) => {
+			const packages = getCallingPackages(stackTrace);
 			trace("[http] Checking isHttpRequestAllowed for " + host + " with packages " + packages.join(','));
 			return packages
 				.map(package => path.join(package, "fuselock.json"))
 				.map(path => getPermissionsForPath(path))
 				.filter(model => model !== null)
-				.every(model => model.isHttpRequestAllowed(host, packages));
+				.every(model => model.isHttpRequestAllowed(host, stackTrace));
 		},
 	};
 

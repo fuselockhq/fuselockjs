@@ -11,6 +11,7 @@ const wrapPermissions = (permissionsModel) => {
 	const fs = require("fs");
 	const path = require("path");
 	const reportFile = process.env.FUSELOCK_REPORT_FILE || null;
+	const {getCallingPackages} = require("./fuselock-utils");
 
 	/**
 	 * @param {string} packagePath
@@ -27,13 +28,29 @@ const wrapPermissions = (permissionsModel) => {
 	};
 
 	/**
+	 * @param {NodeJS.CallSite[]} stackTrace
+	 * @returns {any[]}
+	 */
+	const humanizeStackTrace = (stackTrace) => {
+		return stackTrace.map(callsite => {
+			return {
+				file: callsite.getFileName(),
+				line: callsite.getLineNumber(),
+				column: callsite.getColumnNumber(),
+				func: callsite.getFunctionName(),
+			};
+		});
+	};
+
+	/**
 	 * @param {string} name
-	 * @param {string[]} packages
+	 * @param {NodeJS.CallSite[]} stackTrace
 	 * @param {boolean} result
 	 * @param {object} params
 	 */
-	const report = (name, packages, result, params) => {
+	const report = (name, stackTrace, result, params) => {
 
+		const packages = getCallingPackages(stackTrace);
 		const packagesWithVersions = packages.map(path => {
 			return {
 				path,
@@ -48,6 +65,7 @@ const wrapPermissions = (permissionsModel) => {
 					timestamp: new Date().toISOString(),
 					name,
 					packages: packagesWithVersions,
+					stacktrace: humanizeStackTrace(stackTrace),
 					result,
 					params,
 				},
@@ -60,21 +78,21 @@ const wrapPermissions = (permissionsModel) => {
 
 	/**
 	 * @param {string} command
-	 * @param {string[]} packages
+	 * @param {NodeJS.CallSite[]} stackTrace
 	 */
-	const isExecAllowed = (command, packages) => {
-		const result = permissionsModel.isExecAllowed(command, packages);
-		report("exec", packages, result, {command});
+	const isExecAllowed = (command, stackTrace) => {
+		const result = permissionsModel.isExecAllowed(command, stackTrace);
+		report("exec", stackTrace, result, {command});
 		return result;
 	};
 
 	/**
 	 * @param {string} host
-	 * @param {string[]} packages
+	 * @param {NodeJS.CallSite[]} stackTrace
 	 */
-	const isHttpRequestAllowed = (host, packages) => {
-		const result = permissionsModel.isHttpRequestAllowed(host, packages);
-		report("http", packages, result, {host});
+	const isHttpRequestAllowed = (host, stackTrace) => {
+		const result = permissionsModel.isHttpRequestAllowed(host, stackTrace);
+		report("http", stackTrace, result, {host});
 		return result;
 	};
 

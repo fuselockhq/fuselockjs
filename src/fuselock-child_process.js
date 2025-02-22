@@ -5,10 +5,10 @@
  */
 module.exports = (permissionsModel) => {
 
-	const { Readable } = require('stream');
+	const {Readable} = require('stream');
 	const childProcess = require('child_process');
-	const { trace } = require("./fuselock-log");
-	const { getCallingPackages, hookMethod } = require("./fuselock-utils");
+	const {trace} = require("./fuselock-log");
+	const {hookMethod, getStackTrace, getCallingPackages} = require("./fuselock-utils");
 
 	hookMethod(childProcess, 'exec', (originalMethod, args) => {
 		const command = args[0];
@@ -19,7 +19,7 @@ module.exports = (permissionsModel) => {
 
 		const commandArguments = command.split(" ");
 		const executable = commandArguments[0];
-		const allowed = permissionsModel.isExecAllowed(executable, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(executable, getStackTrace());
 		trace(`[child_process] Executing command: ${command} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
@@ -49,7 +49,7 @@ module.exports = (permissionsModel) => {
 
 		const commandArguments = command.split(" ");
 		const executable = commandArguments[0];
-		const allowed = permissionsModel.isExecAllowed(executable, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(executable, getStackTrace());
 		trace(`[child_process] Executing command: ${command} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
@@ -84,7 +84,7 @@ module.exports = (permissionsModel) => {
 			executable = commandArguments[0];
 		}
 
-		const allowed = permissionsModel.isExecAllowed(executable, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(executable, getStackTrace());
 		trace(`[child_process] Executing file: ${executable} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
@@ -108,7 +108,7 @@ module.exports = (permissionsModel) => {
 
 	hookMethod(childProcess, 'execFileSync', (originalMethod, args) => {
 		const file = args[0];
-		const allowed = permissionsModel.isExecAllowed(file, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(file, getStackTrace());
 		trace(`[child_process] Executing file: ${file} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
@@ -120,11 +120,11 @@ module.exports = (permissionsModel) => {
 
 	hookMethod(childProcess, 'spawn', (originalMethod, args) => {
 		const command = args[0];
-		const allowed = permissionsModel.isExecAllowed(command, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(command, getStackTrace());
 		trace(`[child_process] Spawning process: ${command} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
-			trace(`[child_process] Blocked spawn command: ${command} from packages: ${getCallingPackages().join(",")}`);
+			trace(`[child_process] Blocked spawn command: ${command} from packages: ${getCallingPackages(getStackTrace()).join(",")}`);
 			const result = new childProcess.ChildProcess();
 			result.stdout = new Readable();
 			return result;
@@ -135,7 +135,7 @@ module.exports = (permissionsModel) => {
 
 	hookMethod(childProcess, 'spawnSync', (originalMethod, args) => {
 		const command = args[0];
-		const allowed = permissionsModel.isExecAllowed(command, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(command, getStackTrace());
 		trace(`[child_process] Spawning process: ${command} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
@@ -147,7 +147,7 @@ module.exports = (permissionsModel) => {
 
 	hookMethod(childProcess, 'fork', (originalMethod, args) => {
 		const modulePath = args[0];
-		const allowed = permissionsModel.isExecAllowed(modulePath, getCallingPackages());
+		const allowed = permissionsModel.isExecAllowed(modulePath, getStackTrace());
 		trace(`[child_process] Forking module: ${modulePath} ` + (allowed ? "✅" : "❌"));
 
 		if (!allowed) {
