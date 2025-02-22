@@ -9,12 +9,11 @@ module.exports = (permissionsModel) => {
 	const {getCallingPackages, hookMethod, makeSimpleErrorEventEmitter} = require("./fuselock-utils");
 
 	/**
-	 * @param {object | string} arg
+	 * @param {any | string} arg
 	 * @returns string
 	 */
 	const getUrlFromRequest = (arg) => {
 		if (typeof arg === "object") {
-			// @ts-ignore
 			return arg.hostname || arg.host;
 		} else {
 			return arg;
@@ -29,12 +28,6 @@ module.exports = (permissionsModel) => {
 		trace('[http] request made to host ' + host + " " + (allowed ? "✅" : "❌"));
 		if (!allowed) {
 			const request = makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
-
-			const callback = args[args.length - 1];
-			if (typeof callback === "function") {
-				//	callback(request);
-			}
-
 			return request;
 		}
 
