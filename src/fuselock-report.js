@@ -38,7 +38,7 @@ const wrapPermissions = (permissionsModel) => {
 			return {
 				path,
 				version: getPackageVersion(path),
-			}
+			};
 		});
 
 		if (reportFile) {
