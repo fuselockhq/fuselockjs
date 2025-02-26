@@ -88,6 +88,18 @@ FUSELOCK_E2E && describe('child_process', () => {
 		});
 	});
 
+	it('throws exception if exec called with null', (done) => {
+		try {
+			childProcess.exec(null, (err, stdout, stderr) => {
+				done(new Error("Expected a TypeErrorexception"))
+			});
+		} catch (e) {
+			assert.ok(e instanceof TypeError);
+			assert.equal(e.message, "The \"command\" argument must be of type string. Received null");
+			done();
+		}
+	});
+
 	false && it('should block commands via exec', (done) => {
 		childProcess.exec('/bin/ls -1 /usr/bin', (err, stdout, stderr) => {
 			assert.notEqual(err, null);
