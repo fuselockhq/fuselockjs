@@ -5,8 +5,8 @@
   "scripts": {
     "jshint": "jshint src",
     "test": "mocha --exclude tests/_preload.js tests",
-    "coverage": "FUSELOCK_E2E=1 nyc mocha tests/_preload.js tests"
-
+    "coverage": "FUSELOCK_E2E=1 nyc mocha tests/_preload.js tests",
+    "prepare": "husky"
   },
   "author": "fuselock",
   "license": "Apache",
@@ -16,6 +16,7 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.4",
     "axios": "^1.7.9",
+    "husky": "^9.1.7",
     "jshint": "^2.13.6",
     "mocha": "^10.8.2",
     "nyc": "^17.1.0"
