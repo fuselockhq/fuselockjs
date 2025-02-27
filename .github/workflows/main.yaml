@@ -29,7 +29,6 @@ jobs:
 
     - name: Install dependencies
       run: |
-        npm uninstall husky
         npm install --save-dev
 
     - name: jshint
