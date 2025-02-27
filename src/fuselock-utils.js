@@ -87,7 +87,6 @@ const hookMethod2 = (object, methodName, check, fail) => {
  */
 const makeSimpleErrorEventEmitter = (message) => {
 	const stream = new EventEmitter();
-
 	nextTick(() => {
 		stream.emit('error', new Error(message));
 	});
@@ -95,10 +94,34 @@ const makeSimpleErrorEventEmitter = (message) => {
 	return stream;
 };
 
+/**
+ * @returns {childProcess.ChildProcess}
+ */
 const makeEmptyChildProcess = () => {
 	const result = new childProcess.ChildProcess();
 	result.stdout = new Readable();
 	result.stderr = new Readable();
+	return result;
+};
+
+/**
+ * @param {string} message
+ * @param {Object} extra
+ * @returns {childProcess.ChildProcess}
+ */
+const makeEmptyChildProcessWithError = (message, extra) => {
+	const result = makeEmptyChildProcess();
+	nextTick(() => {
+		const error = new Error(message);
+		for (const key in extra) {
+			if (extra.hasOwnProperty(key)) {
+				error[key] = extra[key];
+			}
+		}
+
+		result.emit('error', error);
+	});
+
 	return result;
 };
 
@@ -122,6 +145,7 @@ module.exports = {
 	hookMethod2,
 	getStackTrace,
 	makeSimpleErrorEventEmitter,
+	makeEmptyChildProcessWithError,
 	hookPrototypeMethod,
 	makeEmptyChildProcess,
 };
