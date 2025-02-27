@@ -11,15 +11,13 @@
   "author": "fuselock",
   "license": "Apache",
   "description": "",
-  "optionalDependencies": {
-    "husky": "^9.1.7"
-  },
   "devDependencies": {
     "@types/axios": "^0.9.36",
     "@types/mocha": "^10.0.10",
     "@types/node": "^22.13.4",
     "axios": "^1.7.9",
     "jshint": "^2.13.6",
+    "husky": "<=9.1.7",
     "mocha": "^10.8.2",
     "nyc": "^17.1.0"
   }
