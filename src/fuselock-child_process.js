@@ -8,7 +8,7 @@ module.exports = (permissionsModel) => {
 	const {Readable} = require('stream');
 	const childProcess = require('child_process');
 	const {trace} = require("./fuselock-log");
-	const {hook, hookMethod, getStackTrace, getCallingPackages, makeEmptyChildProcess, hookMethod2, makeSimpleErrorEventEmitter} = require("./fuselock-utils");
+	const {hookMethod, getStackTrace, getCallingPackages, makeEmptyChildProcess, hookMethod2, makeSimpleErrorEventEmitter, makeEmptyChildProcessWithError} = require("./fuselock-utils");
 
 	/**
 	 * @param {string} command
@@ -78,7 +78,7 @@ module.exports = (permissionsModel) => {
 			options = null;
 		}
 
-		if (options === null) {
+		if (options === null || options === undefined) {
 			options = {};
 		}
 
@@ -87,7 +87,7 @@ module.exports = (permissionsModel) => {
 
 	/**
 	 * @param {string} file
-	 * @param {any[]} args
+	 * @param {any} args
 	 * @param {any} options
 	 * @param {any} callback
 	 * @returns boolean
@@ -132,18 +132,31 @@ module.exports = (permissionsModel) => {
 	// child_process.execFile(file[, args][, options][, callback])
 	hookMethod2(childProcess, 'execFile', checkExecFileAllowed, makeExecFileError);
 
+	/**
+	 * @param {string} file
+	 * @param {any} args
+	 * @param {any} options
+	 * @returns {boolean}
+	 */
+	const checkExecFileSyncAllowed = (file, args, options) => {
+		return checkExecFileAllowed(file, args, options, null);
+	};
+
+	/**
+	 * @param {string} file
+	 * @param {any[]} args
+	 * @param {any} options
+	 * @returns {childProcess.ChildProcess}
+	 */
+	const makeExecFileSyncError = (file, args, options) => {
+		const error = new Error(`${file} ENOENT`);
+		error.code = 'ENOENT';
+		error.errno = -2;
+		throw error;
+	};
+
 	// child_process.execFileSync(file[, args][, options])
-	hookMethod(childProcess, 'execFileSync', (originalMethod, args) => {
-		const file = args[0];
-		const allowed = permissionsModel.isExecAllowed(file, getStackTrace());
-		trace(`[child_process] Executing file: ${file} ` + (allowed ? "✅" : "❌"));
-
-		if (!allowed) {
-			throw new Error(`[child_process] Blocked execFileSync: ${file}`);
-		}
-
-		return originalMethod.apply(this, args);
-	});
+	hookMethod2(childProcess, 'execFileSync', checkExecFileSyncAllowed, makeExecFileSyncError);
 
 	// child_process.spawn(command[, args][, options])
 	hookMethod(childProcess, 'spawn', (originalMethod, args) => {
@@ -152,7 +165,7 @@ module.exports = (permissionsModel) => {
 
 		if (!allowed) {
 			const commandWithArgs = [command, ...args[1]].join(" ");
-			return makeSimpleErrorEventEmitter(`spawn ${commandWithArgs} ENOENT`);
+			return makeEmptyChildProcessWithError(`spawn ${commandWithArgs} ENOENT`, {code: "ENOENT", errno: -2});
 		}
 
 		return originalMethod.apply(this, args);
