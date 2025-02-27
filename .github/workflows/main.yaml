@@ -28,7 +28,9 @@ jobs:
       run: sudo apt-get -qq update && sudo apt-get install -y -qq curl
 
     - name: Install dependencies
-      run: npm install --save-dev
+      run: |
+        npm uninstall husky
+        npm install --save-dev
 
     - name: jshint
       run: |
