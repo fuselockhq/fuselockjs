@@ -95,7 +95,8 @@ FUSELOCK_E2E && describe('child_process', () => {
 			});
 		} catch (e) {
 			assert.ok(e instanceof TypeError);
-			assert.equal(e.message, "The \"command\" argument must be of type string. Received null");
+			// this was changed in node 18 from 'file' to 'command'
+			assert.ok(e.message.match(/The "(command|file)" argument must be of type string. Received null/));
 			done();
 		}
 	});
