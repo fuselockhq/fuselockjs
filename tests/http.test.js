@@ -49,7 +49,21 @@ FUSELOCK_E2E && describe("http+fuselock", () => {
 			});
 	});
 
-	it('should block http get requests with options', (done) => {
+	it('should block http get requests with options (host)', (done) => {
+		// with fuselock, request to google.com should fail
+		http
+			.get({ host: 'http://www.google.com' }, (res) => {
+				res.resume();
+				done(new Error("request was supposed to fail"));
+			})
+			.on("error", (err) => {
+				assert.ok(err instanceof Error);
+				assert.ok(err.message.includes("getaddrinfo ENOTFOUND http://www.google.com"));
+				done();
+			});
+	});
+
+	it('should block http get requests with options (hostname)', (done) => {
 		// with fuselock, request to google.com should fail
 		http
 			.get({ hostname: 'http://www.google.com' }, (res) => {
