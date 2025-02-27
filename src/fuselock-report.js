@@ -1,6 +1,29 @@
 /** @typedef {import('./fuselock.d.ts').PermissionsModel} PermissionsModel */
 
 /**
+ * @param {NodeJS.CallSite} callsite
+ * @returns {string}
+ */
+const humanizeCallSite = (callsite) => {
+	if (callsite.getFunctionName() !== null) {
+		return `    at ${callsite.getFunctionName()} (${callsite.getFileName()}:${callsite.getLineNumber()}:${callsite.getColumnNumber()})`;
+	} else {
+		return `    at ${callsite.getFileName()}:${callsite.getLineNumber()}:${callsite.getColumnNumber()}`;
+	}
+};
+
+/**
+ * @param {NodeJS.CallSite[]} stackTrace
+ * @returns {string}
+ */
+const humanizeStackTrace = (stackTrace) => {
+	return [
+		"Error",
+		...stackTrace.map(callsite => humanizeCallSite(callsite))
+	].join("\n");
+};
+
+/**
  * Given a permissions model, return a new permissions model that reports on the actions taken.
  * 
  * @param {PermissionsModel} permissionsModel
@@ -25,21 +48,6 @@ const wrapPermissions = (permissionsModel) => {
 
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
 		return packageJson.version;
-	};
-
-	/**
-	 * @param {NodeJS.CallSite[]} stackTrace
-	 * @returns {any[]}
-	 */
-	const humanizeStackTrace = (stackTrace) => {
-		return stackTrace.map(callsite => {
-			return {
-				file: callsite.getFileName(),
-				line: callsite.getLineNumber(),
-				column: callsite.getColumnNumber(),
-				func: callsite.getFunctionName(),
-			};
-		});
 	};
 
 	/**
@@ -106,4 +114,5 @@ const wrapPermissions = (permissionsModel) => {
 
 module.exports = {
 	wrapPermissions,
+	humanizeStackTrace,
 };
