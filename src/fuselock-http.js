@@ -5,11 +5,11 @@
  */
 module.exports = (permissionsModel) => {
 	const http = require('http');
-	const {trace} = require("./fuselock-log");
-	const {hookMethod, makeSimpleErrorEventEmitter, getStackTrace} = require("./fuselock-utils");
+	const {hookMethod2, makeSimpleErrorEventEmitter, getStackTrace} = require("./fuselock-utils");
+	const {EventEmitter} = require("events");
 
 	/**
-	 * @param {any | string} arg
+	 * @param {any | URL | string} arg
 	 * @returns string
 	 */
 	const getUrlFromRequest = (arg) => {
@@ -20,30 +20,29 @@ module.exports = (permissionsModel) => {
 		}
 	};
 
-	// function request(options: RequestOptions | string | URL, callback?: (res: IncomingMessage) => void): ClientRequest;
-	// function request(url: string | URL, options: RequestOptions,	callback?: (res: IncomingMessage) => void): ClientRequest;
-	hookMethod(http, 'request', (originalMethod, args) => {
+	/**
+	 * @param  {...any} args 
+	 * @returns boolean
+	 */
+	const checkHttpRequestAllowed = (...args) => {
 		const host = getUrlFromRequest(args[0]);
-		const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
-		trace('[http] request made to host ' + host + " " + (allowed ? "✅" : "❌"));
-		if (!allowed) {
-			const request = makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
-			return request;
-		}
+		return permissionsModel.isHttpRequestAllowed(host, getStackTrace());
+	};
 
-		return originalMethod.apply(this, args);
-	});
+	/**
+	 * @param {...any} args 
+	 * @returns {EventEmitter}
+	 */
+	const makeHttpRequestError = (...args) => {
+		const host = getUrlFromRequest(args[0]);
+		return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
+	};
 
 	// function get(options: RequestOptions | string | URL, callback?: (res: IncomingMessage) => void): ClientRequest;
 	// function get(url: string | URL, options: RequestOptions, callback?: (res: IncomingMessage) => void): ClientRequest;
-	hookMethod(http, 'get', (originalMethod, args) => {
-		const host = getUrlFromRequest(args[0]);
-		const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
-		trace('[http] get request made to host ' + host + " " + (allowed ? "✅" : "❌"));
-		if (!allowed) {
-			return makeSimpleErrorEventEmitter(`getaddrinfo ENOTFOUND ${host}`);
-		}
+	hookMethod2(http, 'get', checkHttpRequestAllowed, makeHttpRequestError);
 
-		return originalMethod.apply(this, args);
-	});
+	// function request(options: RequestOptions | string | URL, callback?: (res: IncomingMessage) => void): ClientRequest;
+	// function request(url: string | URL, options: RequestOptions,	callback?: (res: IncomingMessage) => void): ClientRequest;
+	hookMethod2(http, 'request', checkHttpRequestAllowed, makeHttpRequestError);
 };

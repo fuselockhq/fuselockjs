@@ -79,6 +79,7 @@ const wrapPermissions = (permissionsModel) => {
 	/**
 	 * @param {string} command
 	 * @param {NodeJS.CallSite[]} stackTrace
+	 * @returns {boolean}
 	 */
 	const isExecAllowed = (command, stackTrace) => {
 		const result = permissionsModel.isExecAllowed(command, stackTrace);
@@ -89,6 +90,7 @@ const wrapPermissions = (permissionsModel) => {
 	/**
 	 * @param {string} host
 	 * @param {NodeJS.CallSite[]} stackTrace
+	 * @returns {boolean}
 	 */
 	const isHttpRequestAllowed = (host, stackTrace) => {
 		const result = permissionsModel.isHttpRequestAllowed(host, stackTrace);
