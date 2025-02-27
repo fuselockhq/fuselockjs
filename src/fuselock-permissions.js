@@ -15,9 +15,10 @@ const createPermissions = (p) => {
 
 	/**
 	 * @param {string} host
+	 * @param {NodeJS.CallSite[]} stackTrace
 	 * @returns {boolean}
 	 */
-	const isHttpRequestAllowed = (host) => {
+	const isHttpRequestAllowed = (host, stackTrace) => {
 		if (permissions == null) {
 			// no permissions defined, allow all
 			return true;
@@ -44,9 +45,10 @@ const createPermissions = (p) => {
 
 	/**
 	 * @param {string} command
+	 * @param {NodeJS.CallSite[]} stackTrace
 	 * @returns {boolean}
 	 */
-	const isExecAllowed = (command) => {
+	const isExecAllowed = (command, stackTrace) => {
 		if (permissions == null) {
 			// no permissions defined, allow all
 			return true;

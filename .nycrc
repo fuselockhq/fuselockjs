@@ -4,8 +4,8 @@
   "all": true,
   "include": ["src/**/*.js"],
   "check-coverage": true,
-  "lines": 0,
-  "statements": 0,
-  "functions": 0,
-  "branches": 0
+  "lines": 50,
+  "statements": 50,
+  "functions": 50,
+  "branches": 50
 }

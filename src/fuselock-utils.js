@@ -1,25 +1,28 @@
 const path = require("path");
 const {EventEmitter} = require("events");
 const {nextTick} = require("process");
+const {Readable} = require('stream');
+const childProcess = require('child_process');
 
-/** @returns {string[]} */
-const getCallingPackages = () => {
-	return getStackTrace()
+/**
+ * @param {NodeJS.CallSite[]} stackTrace
+ * @returns {string[]}
+ */
+const getCallingPackages = (stackTrace) => {
+	return stackTrace
 		// remove getCallingPackages()
-		.slice(1)
-		// get rid of CallSite and use source url
+		// .slice(1)
 		.map(callSite => callSite.getScriptNameOrSourceURL())
 		// remove anonymous code
 		.filter(sourceUrl => sourceUrl != null)
 		// remove internal packages
 		.filter(sourceUrl => !sourceUrl.startsWith("node:") && !sourceUrl.startsWith("internal/"))
-		// get actual package path
 		.map(sourceUrl => {
 			const items = sourceUrl.split(path.sep);
 			const p = items.lastIndexOf("node_modules");
 			if (p >= 0) {
 				// this source file is part of a module, we'll return the path to the (nested) node_modules
-				return  items.slice(0, p + 2).join(path.sep);
+				return items.slice(0, p + 2).join(path.sep);
 			} else {
 				// this source file is just a file on disk (for example an index.js or a test script loaded)
 				return path.dirname(sourceUrl);
@@ -60,6 +63,24 @@ const hookMethod = (object, methodName, callback) => {
 };
 
 /**
+ * @param {any} object
+ * @param {string} methodName
+ * @param {(...args: any[]) => boolean} check
+ * @param {(...args: any[]) => any} fail
+ */
+const hookMethod2 = (object, methodName, check, fail) => {
+	const originalMethod = object[methodName];
+	/** @param {any[]} args */
+	object[methodName] = (...args) => {
+		if (!check(...args)) {
+			return fail(...args);
+		}
+
+		return originalMethod.apply(this, args);
+	};
+};
+
+/**
  * Creates an EventEmitter that emits an error on next tick
  * @param {string} message
  * @returns {EventEmitter}
@@ -72,6 +93,13 @@ const makeSimpleErrorEventEmitter = (message) => {
 	});
 
 	return stream;
+};
+
+const makeEmptyChildProcess = () => {
+	const result = new childProcess.ChildProcess();
+	result.stdout = new Readable();
+	result.stderr = new Readable();
+	return result;
 };
 
 /**
@@ -91,7 +119,9 @@ const hookPrototypeMethod = (prototype, methodName, callback) => {
 module.exports = {
 	getCallingPackages,
 	hookMethod,
+	hookMethod2,
 	getStackTrace,
 	makeSimpleErrorEventEmitter,
 	hookPrototypeMethod,
+	makeEmptyChildProcess,
 };
