@@ -100,7 +100,7 @@ FUSELOCK_E2E && describe('child_process', () => {
 		}
 	});
 
-	false && it('should block commands via exec', (done) => {
+	it('should block commands via exec', (done) => {
 		childProcess.exec('/bin/ls -1 /usr/bin', (err, stdout, stderr) => {
 			assert.notEqual(err, null);
 			assert.equal(stdout, '');
@@ -109,11 +109,22 @@ FUSELOCK_E2E && describe('child_process', () => {
 		});
 	});
 
-	false && it('should block commands via execFile', (done) => {
+	it('should block commands via execFile', (done) => {
 		childProcess.execFile('/bin/ls', ['-1', '/usr/bin'], (err, stdout, stderr) => {
 			assert.notEqual(err, null);
 			assert.equal(stdout, '');
 			assert.equal(stderr, '');
+			done();
+		});
+	});
+	
+	// TODO: write a test with options.shell = true
+
+	it('should block commands via spawn', (done) => {
+		const c = childProcess.spawn('/bin/ls', ['-1', '/usr/bin']);
+		c.on("error", (err) => {
+			// TODO: add assertions for errno == -2, code == "ENOENT"
+			assert.equal(err.message, "spawn /bin/ls -1 /usr/bin ENOENT");
 			done();
 		});
 	});
