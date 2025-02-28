@@ -52,19 +52,6 @@ const getStackTrace = () => {
 /**
  * @param {any} object
  * @param {string} methodName
- * @param {(originalMethod: any, args: any[]) => any} callback
- */
-const hookMethod = (object, methodName, callback) => {
-	const originalMethod = object[methodName];
-	/** @param {any[]} args */
-	object[methodName] = (...args) => {
-		return callback(originalMethod, args);
-	};
-};
-
-/**
- * @param {any} object
- * @param {string} methodName
  * @param {(...args: any[]) => boolean} check
  * @param {(...args: any[]) => any} fail
  */
@@ -106,19 +93,14 @@ const makeEmptyChildProcess = () => {
 
 /**
  * @param {string} message
- * @param {Object} extra
+ * @param {object} extra
  * @returns {childProcess.ChildProcess}
  */
 const makeEmptyChildProcessWithError = (message, extra) => {
 	const result = makeEmptyChildProcess();
 	nextTick(() => {
 		const error = new Error(message);
-		for (const key in extra) {
-			if (extra.hasOwnProperty(key)) {
-				error[key] = extra[key];
-			}
-		}
-
+		Object.assign(error, extra);
 		result.emit('error', error);
 	});
 
@@ -141,7 +123,6 @@ const hookPrototypeMethod = (prototype, methodName, callback) => {
 
 module.exports = {
 	getCallingPackages,
-	hookMethod,
 	hookMethod2,
 	getStackTrace,
 	makeSimpleErrorEventEmitter,
