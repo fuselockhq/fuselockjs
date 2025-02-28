@@ -14,10 +14,11 @@ jobs:
         os: [ubuntu-latest]
         node-version: [14.x, 16.x, 18.x, 19.x, 20.x, 21.x, 22.x, 23.x]
         include:
+          - os: macos-13
+            node-version: 14.x
           - os: macos-latest
             node-version: 23.x
-          - os: macos-latest
-            node-version: 14.x
+
 
     runs-on: ${{ matrix.os }}
 
