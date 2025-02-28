@@ -8,7 +8,7 @@ module.exports = (permissionsModel) => {
 	const {Readable} = require('stream');
 	const childProcess = require('child_process');
 	const {trace} = require("./fuselock-log");
-	const {hookMethod, getStackTrace, getCallingPackages, makeEmptyChildProcess, hookMethod2, makeSimpleErrorEventEmitter, makeEmptyChildProcessWithError} = require("./fuselock-utils");
+	const {getStackTrace, getCallingPackages, makeEmptyChildProcess, hookMethod2, makeSimpleErrorEventEmitter, makeEmptyChildProcessWithError} = require("./fuselock-utils");
 
 	/**
 	 * @param {string} command
