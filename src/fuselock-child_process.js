@@ -158,31 +158,52 @@ module.exports = (permissionsModel) => {
 	// child_process.execFileSync(file[, args][, options])
 	hookMethod2(childProcess, 'execFileSync', checkExecFileSyncAllowed, makeExecFileSyncError);
 
-	// child_process.spawn(command[, args][, options])
-	hookMethod(childProcess, 'spawn', (originalMethod, args) => {
-		const command = args[0];
-		const allowed = permissionsModel.isExecAllowed(command, getStackTrace());
-
-		if (!allowed) {
-			const commandWithArgs = [command, ...args[1]].join(" ");
-			return makeEmptyChildProcessWithError(`spawn ${commandWithArgs} ENOENT`, {code: "ENOENT", errno: -2});
+	/**
+	 * @param {string} command
+	 * @param {any} args
+	 * @param {any} options
+	 * @returns {boolean}
+	 */
+	const checkSpawnAllowed = (command, args, options) => {
+		if (command === null || command === undefined || typeof command !== 'string') {
+			// let the original method throw an exception
+			return true;
 		}
 
-		return originalMethod.apply(this, args);
-	});
+		return permissionsModel.isExecAllowed(command, getStackTrace());
+	};
+
+	/**
+	 * @param {string} command
+	 * @param {any} args
+	 * @param {any} options
+	 * @returns {childProcess.ChildProcess}
+	 */
+	const makeSpawnError = (command, args, options) => {
+		const commandWithArgs = [command, ...args].join(" ");
+		return makeEmptyChildProcessWithError(`spawn ${commandWithArgs} ENOENT`, {code: "ENOENT", errno: -2});
+	};
+
+	/**
+	 * @param {string} command
+	 * @param {any} args
+	 * @param {any} options
+	 * @return {childProcess.ChildProcess}
+	 */
+	const makeSpawnSyncError = (command, args, options) => {
+		const commandWithArgs = [command, ...args].join(" ");
+		const result = new childProcess.ChildProcess();
+		result.error = new Error(`spawnSync ${commandWithArgs} ENOENT`);
+		result.error.code = "ENOENT";
+		result.error.errno = -2;
+		return result;
+	};
+
+	// child_process.spawn(command[, args][, options])
+	hookMethod2(childProcess, 'spawn', checkSpawnAllowed, makeSpawnError);
 
 	// child_process.spawnSync(command[, args][, options])
-	hookMethod(childProcess, 'spawnSync', (originalMethod, args) => {
-		const command = args[0];
-		const allowed = permissionsModel.isExecAllowed(command, getStackTrace());
-		trace(`[child_process] Spawning process: ${command} ` + (allowed ? "✅" : "❌"));
-
-		if (!allowed) {
-			throw new Error(`[child_process] Blocked spawnSync: ${command}`);
-		}
-
-		return originalMethod.apply(this, args);
-	});
+	hookMethod2(childProcess, 'spawnSync', checkSpawnAllowed, makeSpawnSyncError);
 
 	/**
 	 * @param {string} modulePath

@@ -101,6 +101,18 @@ FUSELOCK_E2E && describe('child_process', () => {
 		}
 	});
 
+	it('throws exception if spawn called with null', (done) => {
+		try {
+			childProcess.spawn(null, null);
+			done(new Error("Expected a TypeErrorexception"))
+		} catch (e) {
+			assert.ok(e instanceof TypeError);
+			// this was changed in node 18 from 'file' to 'command'
+			assert.ok(e.message.match(/The "(command|file)" argument must be of type string. Received null/));
+			done();
+		}
+	});
+
 	it('should block commands via exec', (done) => {
 		childProcess.exec('/bin/ls -1 /usr/bin', (err, stdout, stderr) => {
 			assert.notEqual(err, null);
@@ -182,6 +194,15 @@ FUSELOCK_E2E && describe('child_process', () => {
 			assert.equal(err.errno, -2);
 			done();
 		});
+	});
+
+	it('should block commands via spawnSync', () => {
+		const c = childProcess.spawnSync('/bin/ls', ['-1', '/usr/bin']);
+		assert.equal(c.stdout, null);
+		assert.equal(c.stderr, null);
+		assert.equal(c.error.code, 'ENOENT');
+		assert.equal(c.error.errno, -2);
+		assert.equal(c.error.message, "spawnSync /bin/ls -1 /usr/bin ENOENT");
 	});
 
 });
