@@ -81,6 +81,11 @@ module.exports = (permissionsModel) => {
 			nextTick(() => {
 				thisArg.emit('error', new Error(`connect ENOENT ${host}`));
 			});
+		} else {
+			// can only happen on node 14
+			nextTick(() => {
+				thisArg.emit('error', new Error(`connect ENOENT`));
+			});
 		}
 
 		return thisArg;
