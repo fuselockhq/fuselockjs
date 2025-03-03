@@ -9,7 +9,7 @@ const {nextTick} = require('process');
  */
 module.exports = (permissionsModel) => {
 	const net = require('net');
-	const {trace, warn} = require("./fuselock-log");
+	const {trace} = require("./fuselock-log");
 	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
 
 	/**
@@ -51,12 +51,16 @@ module.exports = (permissionsModel) => {
 
 		if (path) {
 			// FIXME: not checked if allowed
-			warn(`[net] Connecting to IPC path: ${path} ❌`);
+			trace(`[net] Connecting to IPC path: ${path} ❌`);
 			return false;
 		} else if (host) {
 			return permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 		} else {
 			// this is going to fail, pass this through to node to emit the right error
+			if (process.version.startsWith('v14.')) {
+				trace(`[net] connect() called with no arguments on node 14 ❌`);
+				return false;
+			}
 		}
 
 		return true;
