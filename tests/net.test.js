@@ -61,6 +61,16 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 		socket.on('error', (err) => done(err));
 	});
 
+	it('should pass through connect with empty options object', (done) => {
+		const socket = new net.Socket();
+		try {
+			socket.connect({});
+		} catch (err) {
+			assert.ok(err.message.includes('The "options" or "port" or "path" argument must be specified'), "err.message: " + err.message);
+			done();
+		}
+	});
+
 	it('should block net connections', (done) => {
 		// with fuselock, connection to google.com should fail
 		const socket = new net.Socket();
@@ -73,7 +83,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 
 		socket.on('error', (err) => {
 			assert.ok(err instanceof Error);
-			assert.ok(err.message.includes("getaddrinfo ENOTFOUND www.google.com"));
+			assert.ok(err.message.includes("connect ENOENT www.google.com"), "err.message: " + err.message);
 			done();
 		});
 	});
@@ -92,7 +102,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 
 		socket.on('error', (err) => {
 			assert.ok(err instanceof Error);
-			assert.ok(err.message.includes("getaddrinfo ENOTFOUND www.google.com"));
+			assert.ok(err.message.includes("connect ENOENT www.google.com"), "err.message: " + err.message);
 			done();
 		});
 	});
@@ -109,7 +119,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 
 		socket.on('error', (err) => {
 			assert.ok(err instanceof Error);
-			assert.ok(err.message.includes("getaddrinfo ENOTFOUND /var/run/usbmuxd"));
+			assert.ok(err.message.includes("connect ENOENT /var/run/usbmuxd"), "err.message: " + err.message);
 			done();
 		});
 	});

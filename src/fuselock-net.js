@@ -9,23 +9,23 @@ const {nextTick} = require('process');
  */
 module.exports = (permissionsModel) => {
 	const net = require('net');
-	const {trace} = require("./fuselock-log");
+	const {trace, warn} = require("./fuselock-log");
 	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
 
-	// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
-	// connect(port: number, host: string, connectionListener?: () => void): this;
-	// connect(port: number, connectionListener?: () => void): this;
-	// connect(path: string, connectionListener?: () => void): this;
-	hookPrototypeMethod(net.Socket.prototype, 'connect', (originalMethod, thisArg, args) => {
+	/**
+	 * @param {any[]} args
+	 * @returns {{host: string | null, port: number | null, path: string | null}}
+	 */
+	const normalizeConnectArgs = (args) => {
 		let host = null;
 		let port = null;
 		let path = null;
 
-		if (typeof args[0] === 'object') {
+		if (typeof args[0] === "object") {
 			// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
 			const options = args[0];
-			host = options.host || options.hostname || 'localhost';
-			port = options.port || null;
+			host = options.host || options.hostname || null;
+			port = parseInt(options.port) || null;
 			path = options.path || null;
 		} else if (typeof args[0] === 'string') {
 			// connect(path: string, connectionListener?: () => void): this;
@@ -34,33 +34,57 @@ module.exports = (permissionsModel) => {
 			// connect(port: number, host: string, connectionListener?: () => void): this;
 			// connect(port: number, connectionListener?: () => void): this;
 			port = args[0];
-			host = (typeof args[1] === 'string') ? args[1] : "localhost";
+			host = (typeof args[1] === 'string') ? args[1] : null;
 		}
 
-		// FIXME: support connection listener
+		return {host, port, path};
+	};
+
+	/**
+	 * @param {any} thisArg
+	 * @param {any[]} args
+	 * @returns {boolean}
+	 */
+	const check = (thisArg, args) => {
+		const normalized = normalizeConnectArgs(args);
+		const {host, port, path} = normalized;
+
 		if (path) {
-			trace(`[net] Connecting to IPC path: ${path} ❌`);
 			// FIXME: not checked if allowed
-
-			const message = `getaddrinfo ENOTFOUND ${path}`;
-			nextTick(() => {
-				thisArg.emit('error', new Error(message));
-			});
-
-			return thisArg;
+			warn(`[net] Connecting to IPC path: ${path} ❌`);
+			return false;
+		} else if (host) {
+			return permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 		} else {
-			const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
-			trace(`[net] Connecting to ${host}:${port} ` + (allowed ? "✅" : "❌"));
-			if (!allowed) {
-				const message = `getaddrinfo ENOTFOUND ${host}`;
-				nextTick(() => {
-					thisArg.emit('error', new Error(message));
-				});
-
-				return thisArg;
-			}
+			// this is going to fail, pass this through to node to emit the right error
 		}
 
-		return originalMethod.apply(thisArg, args);
-	});
+		return true;
+	};
+
+	/**
+	 * @param {any} thisArg
+	 * @param {any[]} args
+	 */
+	const fail = (thisArg, args) => {
+		const {path, host} = normalizeConnectArgs(args);
+
+		if (path) {
+			nextTick(() => {
+				thisArg.emit('error', new Error(`connect ENOENT ${path}`));
+			});
+		} else if (host) {
+			nextTick(() => {
+				thisArg.emit('error', new Error(`connect ENOENT ${host}`));
+			});
+		}
+
+		return thisArg;
+	};
+
+	// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
+	// connect(port: number, host: string, connectionListener?: () => void): this;
+	// connect(port: number, connectionListener?: () => void): this;
+	// connect(path: string, connectionListener?: () => void): this;
+	hookPrototypeMethod(net.Socket.prototype, 'connect', check, fail);
 };
