@@ -13,28 +13,35 @@ module.exports = (permissionsModel) => {
 	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
 
 	/**
-	 * @param {any[]} args
+	 * @param {any} arg1
+	 * @param {any} arg2
 	 * @returns {{host: string | null, port: number | null, path: string | null}}
 	 */
-	const normalizeConnectArgs = (args) => {
+	const normalizeConnectArgs = (arg1, arg2) => {
+
+		if (Array.isArray(arg1)) {
+			arg2 = arg1[1];
+			arg1 = arg1[0];	
+		}
+
 		let host = null;
 		let port = null;
 		let path = null;
 
-		if (typeof args[0] === "object") {
+		if (typeof arg1 === "object") {
 			// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
-			const options = args[0];
+			const options = arg1;
 			host = options.host || options.hostname || null;
 			port = parseInt(options.port) || null;
 			path = options.path || null;
-		} else if (typeof args[0] === 'string') {
+		} else if (typeof arg1 === 'string') {
 			// connect(path: string, connectionListener?: () => void): this;
-			path = args[0];
-		} else if (typeof args[0] === 'number') {
+			path = arg1;
+		} else if (typeof arg1 === 'number') {
 			// connect(port: number, host: string, connectionListener?: () => void): this;
 			// connect(port: number, connectionListener?: () => void): this;
-			port = args[0];
-			host = (typeof args[1] === 'string') ? args[1] : null;
+			port = arg1;
+			host = (typeof arg2 === 'string') ? arg2 : null;
 		}
 
 		return {host, port, path};
@@ -42,12 +49,12 @@ module.exports = (permissionsModel) => {
 
 	/**
 	 * @param {any} thisArg
-	 * @param {any[]} args
+	 * @param {any} arg1
+	 * @param {any} arg2
 	 * @returns {boolean}
 	 */
-	const check = (thisArg, args) => {
-		const normalized = normalizeConnectArgs(args);
-		const {host, port, path} = normalized;
+	const check = (thisArg, arg1, arg2) => {
+		const {host, port, path} = normalizeConnectArgs(arg1, arg2);
 
 		if (path) {
 			// FIXME: not checked if allowed
@@ -68,10 +75,12 @@ module.exports = (permissionsModel) => {
 
 	/**
 	 * @param {any} thisArg
-	 * @param {any[]} args
+	 * @param {any} arg1
+	 * @param {any} arg2
+	 * @returns {any}
 	 */
-	const fail = (thisArg, args) => {
-		const {path, host} = normalizeConnectArgs(args);
+	const fail = (thisArg, arg1, arg2) => {
+		const {host, port, path} = normalizeConnectArgs(arg1, arg2);
 
 		if (path) {
 			nextTick(() => {
@@ -79,7 +88,16 @@ module.exports = (permissionsModel) => {
 			});
 		} else if (host) {
 			nextTick(() => {
-				thisArg.emit('error', new Error(`connect ENOENT ${host}`));
+				const error = new Error(`getaddrinfo ENOTFOUND ${host}`);
+				error.errno = -3008;
+				error.code = 'ENOTFOUND';
+				error.syscall = 'getaddrinfo';
+				error.hostname = host;
+				thisArg.destroy(error);
+
+				// console.log("X emitting error on ", thisArg.listenerCount('error'));
+				// console.log("X emitting error on ", thisArg.listeners('error'));
+				// thisArg.emit('error', new Error(`connect ENOENT ${host}`));
 			});
 		} else {
 			// can only happen on node 14

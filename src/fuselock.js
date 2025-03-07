@@ -20,15 +20,15 @@
 	setLogLevel(parseInt(process.env.FUSELOCK_LOGLEVEL || `${LOG_LEVEL_WARN}`));
 
 	const hookNet = require('./fuselock-net');
-	const hookHttp = require('./fuselock-http');
-	const hookHttps = require('./fuselock-https');
+	// const hookHttp = require('./fuselock-http');
+	// const hookHttps = require('./fuselock-https');
 	const hookChildProcess = require('./fuselock-child_process');
 
 	/** @type {Record<string, Function>} */
 	const modules = {
-		'net': hookNet,
-		'http': hookHttp,
-		'https': hookHttps,
+		//'net': hookNet,
+		// 'http': hookHttp,
+		// 'https': hookHttps,
 		'child_process': hookChildProcess,
 	};
 
@@ -105,4 +105,7 @@
 
 	// hooking module first, because that's how new modules are loaded
 	hookModule();
+
+	// hook net, since it's used by http and https
+	hookNet(globalPermissionsModel);
 })();

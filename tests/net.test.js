@@ -68,7 +68,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 		} catch (err) {
 			if (process.version.startsWith('v14.')) {
 				// node 14 would have created a connection to localhost
-				assert.ok(err.message.includes('connect ENOENT'), "err.message: " + err.message);
+				assert.ok(err.message.includes('getaddrinfo ENOTFOUND'), "err.message: " + err.message);
 			} else {
 				// node 16 and above would have failed this request
 				assert.ok(err.message.includes('The "options" or "port" or "path" argument must be specified'), "err.message: " + err.message);
@@ -89,7 +89,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 
 		socket.on('error', (err) => {
 			assert.ok(err instanceof Error);
-			assert.ok(err.message.includes("connect ENOENT www.google.com"), "err.message: " + err.message);
+			assert.ok(err.message.includes("getaddrinfo ENOTFOUND www.google.com"), "err.message: " + err.message);
 			done();
 		});
 	});
@@ -108,7 +108,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 
 		socket.on('error', (err) => {
 			assert.ok(err instanceof Error);
-			assert.ok(err.message.includes("connect ENOENT www.google.com"), "err.message: " + err.message);
+			assert.ok(err.message.includes("getaddrinfo ENOTFOUND www.google.com"), "err.message: " + err.message);
 			done();
 		});
 	});
