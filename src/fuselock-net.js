@@ -12,55 +12,109 @@ module.exports = (permissionsModel) => {
 	const {trace} = require("./fuselock-log");
 	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
 
-	// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
-	// connect(port: number, host: string, connectionListener?: () => void): this;
-	// connect(port: number, connectionListener?: () => void): this;
-	// connect(path: string, connectionListener?: () => void): this;
-	hookPrototypeMethod(net.Socket.prototype, 'connect', (originalMethod, thisArg, args) => {
+	/**
+	 * @param {any} arg1
+	 * @param {any} arg2
+	 * @returns {{host: string | null, port: number | null, path: string | null}}
+	 */
+	const normalizeConnectArgs = (arg1, arg2) => {
+
+		if (Array.isArray(arg1)) {
+			arg2 = arg1[1];
+			arg1 = arg1[0];	
+		}
+
 		let host = null;
 		let port = null;
 		let path = null;
 
-		if (typeof args[0] === 'object') {
+		if (typeof arg1 === "object") {
 			// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
-			const options = args[0];
-			host = options.host || options.hostname || 'localhost';
-			port = options.port || null;
+			const options = arg1;
+			host = options.host || options.hostname || null;
+			port = parseInt(options.port) || null;
 			path = options.path || null;
-		} else if (typeof args[0] === 'string') {
+		} else if (typeof arg1 === 'string') {
 			// connect(path: string, connectionListener?: () => void): this;
-			path = args[0];
-		} else if (typeof args[0] === 'number') {
+			path = arg1;
+		} else if (typeof arg1 === 'number') {
 			// connect(port: number, host: string, connectionListener?: () => void): this;
 			// connect(port: number, connectionListener?: () => void): this;
-			port = args[0];
-			host = (typeof args[1] === 'string') ? args[1] : "localhost";
+			port = arg1;
+			host = (typeof arg2 === 'string') ? arg2 : null;
 		}
 
-		// FIXME: support connection listener
+		return {host, port, path};
+	};
+
+	/**
+	 * @param {any} thisArg
+	 * @param {any} arg1
+	 * @param {any} arg2
+	 * @returns {boolean}
+	 */
+	const check = (thisArg, arg1, arg2) => {
+		const {host, port, path} = normalizeConnectArgs(arg1, arg2);
+
 		if (path) {
-			trace(`[net] Connecting to IPC path: ${path} ❌`);
 			// FIXME: not checked if allowed
-
-			const message = `getaddrinfo ENOTFOUND ${path}`;
-			nextTick(() => {
-				thisArg.emit('error', new Error(message));
-			});
-
-			return thisArg;
+			trace(`[net] Connecting to IPC path: ${path} ❌`);
+			return false;
+		} else if (host) {
+			return permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 		} else {
-			const allowed = permissionsModel.isHttpRequestAllowed(host, getStackTrace());
-			trace(`[net] Connecting to ${host}:${port} ` + (allowed ? "✅" : "❌"));
-			if (!allowed) {
-				const message = `getaddrinfo ENOTFOUND ${host}`;
-				nextTick(() => {
-					thisArg.emit('error', new Error(message));
-				});
-
-				return thisArg;
+			// this is going to fail, pass this through to node to emit the right error
+			if (process.version.startsWith('v14.')) {
+				trace(`[net] connect() called with no arguments on node 14 ❌`);
+				return false;
 			}
 		}
 
-		return originalMethod.apply(thisArg, args);
-	});
+		return true;
+	};
+
+	/**
+	 * @param {any} thisArg
+	 * @param {any} arg1
+	 * @param {any} arg2
+	 * @returns {any}
+	 */
+	const fail = (thisArg, arg1, arg2) => {
+		const {host, port, path} = normalizeConnectArgs(arg1, arg2);
+
+		if (path) {
+			nextTick(() => {
+				thisArg.emit('error', new Error(`connect ENOENT ${path}`));
+			});
+		} else if (host) {
+			nextTick(() => {
+				/** @type {any} error */
+				const error = new Error(`getaddrinfo ENOTFOUND ${host}`);
+				error.errno = -3008;
+				error.code = 'ENOTFOUND';
+				error.syscall = 'getaddrinfo';
+				error.hostname = host;
+				thisArg.destroy(error);
+			});
+		} else {
+			// can only happen on node 14
+			nextTick(() => {
+				/** @type {any} error */
+				const error = new Error(`connect ECONNREFUSED 127.0.0.1`);
+				error.errno = -3008;
+				error.code = 'ENOTFOUND';
+				error.syscall = 'getaddrinfo';
+				error.hostname = host;
+				thisArg.destroy(error);
+			});
+		}
+
+		return thisArg;
+	};
+
+	// connect(options: SocketConnectOpts, connectionListener?: () => void): this;
+	// connect(port: number, host: string, connectionListener?: () => void): this;
+	// connect(port: number, connectionListener?: () => void): this;
+	// connect(path: string, connectionListener?: () => void): this;
+	hookPrototypeMethod(net.Socket.prototype, 'connect', check, fail);
 };

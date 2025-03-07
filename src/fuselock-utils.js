@@ -111,13 +111,19 @@ const makeEmptyChildProcessWithError = (message, extra) => {
  * Hooks a prototype method while preserving the 'this' binding
  * @param {any} prototype The prototype object (e.g., Socket.prototype)
  * @param {string} methodName Name of method to hook
- * @param {(originalMethod: Function, thisArg: any, args: any[]) => any} callback
+ * @param {(thisArg: any, ...args: any[]) => boolean} check
+ * @param {(thisArg: any, ...args: any[]) => any} fail
  */
-const hookPrototypeMethod = (prototype, methodName, callback) => {
+const hookPrototypeMethod = (prototype, methodName, check, fail) => {
 	const originalMethod = prototype[methodName];
 	/** @param {any[]} args */
-	prototype[methodName] = function (...args) {
-		return callback(originalMethod, this, args);
+	prototype[methodName] = function(...args) {
+		if (!check(this, ...args)) {
+			const result = fail(this, ...args);
+			return result;
+		}
+
+		return originalMethod.apply(this, args);
 	};
 };
 

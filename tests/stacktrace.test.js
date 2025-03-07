@@ -1,6 +1,7 @@
 const assert = require('assert');
 const path = require('path');
 const {innerGetStackTrace, innerGetCallingPackages} = require("./helpers/stacktrace/inner-stack-trace");
+const {humanizeStackTrace} = require("../src/fuselock-report");
 
 describe('stacktrace', () => {
 	it('gets stack trace', () => {
@@ -22,4 +23,11 @@ describe('stacktrace', () => {
 		assert.equal(packages[1], `${__dirname}`);
 		assert.equal(packages[2], path.resolve(path.join(__dirname, "../node_modules/mocha")));
 	});
+
+	// it('humanizes stack trace', () => {
+	// 	console.dir(new Error());
+	// 	const stackTrace = innerGetStackTrace();
+	// 	const humanized = humanizeStackTrace(stackTrace);
+	// 	assert.equal(humanized, "");
+	// });
 });

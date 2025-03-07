@@ -19,13 +19,13 @@ const createPermissions = (p) => {
 	 * @returns {boolean}
 	 */
 	const isHttpRequestAllowed = (host, stackTrace) => {
-		if (permissions == null) {
+		if (permissions == null || permissions.permissions == null || permissions.permissions.http == null) {
 			// no permissions defined, allow all
 			return true;
 		}
 
-		const allowlist = permissions.permissions?.http?.allow || [];
-		const denylist = permissions.permissions?.http?.deny || [];
+		const allowlist = permissions.permissions.http.allow || [];
+		const denylist = permissions.permissions.http.deny || [];
 		trace("[http] this is the allow list: " + JSON.stringify(allowlist) + " and deny list: " + JSON.stringify(denylist));
 
 		if (!allowlist.some(allow => hostmatch(allow, host))) {
@@ -54,7 +54,7 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		if (permissions.permissions?.exec?.allow) {
+		if (permissions.permissions && permissions.permissions.exec && permissions.permissions.exec.allow) {
 			for (const allowedCommand of permissions.permissions.exec.allow) {
 				if (command == allowedCommand) {
 					return true;
