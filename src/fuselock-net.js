@@ -88,21 +88,24 @@ module.exports = (permissionsModel) => {
 			});
 		} else if (host) {
 			nextTick(() => {
+				/** @type {any} error */
 				const error = new Error(`getaddrinfo ENOTFOUND ${host}`);
 				error.errno = -3008;
 				error.code = 'ENOTFOUND';
 				error.syscall = 'getaddrinfo';
 				error.hostname = host;
 				thisArg.destroy(error);
-
-				// console.log("X emitting error on ", thisArg.listenerCount('error'));
-				// console.log("X emitting error on ", thisArg.listeners('error'));
-				// thisArg.emit('error', new Error(`connect ENOENT ${host}`));
 			});
 		} else {
 			// can only happen on node 14
 			nextTick(() => {
-				thisArg.emit('error', new Error(`connect ENOENT`));
+				/** @type {any} error */
+				const error = new Error(`connect ECONNREFUSED 127.0.0.1`);
+				error.errno = -3008;
+				error.code = 'ENOTFOUND';
+				error.syscall = 'getaddrinfo';
+				error.hostname = host;
+				thisArg.destroy(error);
 			});
 		}
 
