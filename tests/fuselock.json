@@ -20,7 +20,8 @@
 		},
 		"exec": {
 			"allow": [
-				"/bin/echo"
+				"/bin/echo",
+				"./tests/helpers/child_process/*"
 			]
 		}
 	}

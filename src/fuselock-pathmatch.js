@@ -1,5 +1,5 @@
-const {minimatch} = require('minimatch');
 const path = require('path');
+const {minimatch} = require('minimatch');
 
 /**
  * @param {string} _path
@@ -13,12 +13,10 @@ const pathmatch = (_path, pattern) => {
 
 	_path = path.resolve(_path);
 
-	if (!pattern.startsWith("/") && !pattern.startsWith("*")) {
-		const cwd = process.cwd() + "/";
-		pattern = cwd + pattern.slice(2);
+	if (!path.isAbsolute(pattern)) {
+		pattern = path.resolve(process.cwd(), pattern);
 	}
 
-	// console.log("pathmatch", _path, pattern, minimatch(_path, pattern));
 	return minimatch(_path, pattern);
 };
 

@@ -5,49 +5,43 @@
  */
 module.exports = (permissionsModel) => {
 	const fs = require('fs');
-	const {hookMethod2, makeSimpleErrorEventEmitter, getStackTrace} = require("./fuselock-utils");
+	const {hookMethod2, getStackTrace} = require("./fuselock-utils");
 	const {trace} = require("./fuselock-log");
 
 	/**
-	 * @param {string | Buffer | URL | number} path 
+	 * @param {fs.PathLike} path 
 	 * @returns {boolean}
 	 */
 	const checkReadFileSync = (path) => {
-		trace("[fs] checking readFileSync with path: " + path);
-		const allowed = permissionsModel.isFileAccessAllowed("" + path, getStackTrace());
-		trace("[fs] readFileSync allowed: " + allowed);
-		return allowed;
+		return permissionsModel.isFileAccessAllowed("" + path, getStackTrace());
 	};
 
 	/**
-	 * @param {string | Buffer | URL | number} path 
+	 * @param {fs.PathLike} path 
 	 * @throws {Error}
 	 */
 	const failReadFileSync = (path) => {
-		/** @type {any} */
+		/** @type {NodeJS.ErrnoException} err */
 		const err = new Error(`ENOENT: no such file or directory, open '${path}'`);
 		err.errno = -2;
 		err.syscall = 'open';
 		err.code = 'ENOENT';
-		err.path = path;
+		err.path = "" + path;
 		throw err;
 	};
 
 	/**
-	 * @param {string | Buffer | URL | number} path 
+	 * @param {fs.PathLike} path 
 	 * @param {Object} options
 	 * @param {Function} callback
 	 * @throws {Error}
 	 */
 	const checkReadFile = (path, options, callback) => {
-		trace("[fs] checking readFile with path: " + path);
-		const allowed = checkReadFileSync(path);
-		trace("[fs] readFile allowed: " + allowed);
-		return allowed;
+		return checkReadFileSync(path);
 	};
 
 	/**
-	 * @param {string | Buffer | URL | number} path 
+	 * @param {fs.PathLike} path 
 	 * @param {any} options
 	 * @param {any} callback
 	 * @throws {Error}
@@ -58,47 +52,44 @@ module.exports = (permissionsModel) => {
 			options = undefined;
 		}
 
-		/** @type {any} err */
+		/** @type {NodeJS.ErrnoException} err */
 		const err = new Error(`ENOENT: no such file or directory, open '${path}'`);
 		err.errno = -2;
 		err.syscall = 'open';
 		err.code = 'ENOENT';
-		err.path = path;
+		err.path = "" + path;
 
 		callback(err, undefined);
 		return undefined;
 	};
 
 	/**	
-	 * @param {string | Buffer | URL | number} src 
-	 * @param {string | Buffer | URL | number} dest 
+	 * @param {fs.PathLike} src 
+	 * @param {fs.PathLike} dest 
 	 * @throws {boolean}
 	 */
 	const checkCopyFileSync = (src, dest) => {
-		trace("[fs] checking copyFileSync with src: " + src + " and dest: " + dest);
-		const allowed = permissionsModel.isFileAccessAllowed("" + src, getStackTrace());
-		trace("[fs] copyFileSync allowed: " + allowed);
-		return allowed;
+		return permissionsModel.isFileAccessAllowed("" + src, getStackTrace());
 	};
 
 	/**
-	 * @param {string | Buffer | URL | number} src 
-	 * @param {string | Buffer | URL | number} dest 
+	 * @param {fs.PathLike} src 
+	 * @param {fs.PathLike} dest 
 	 * @throws {Error}
 	 */
 	const failCopyFileSync = (src, dest) => {
-		/** @type {any} err */
+		/** @type {NodeJS.ErrnoException} err */
 		const err = new Error(`ENOENT: no such file or directory, copyfile '${src}' -> '${dest}'`);
 		err.errno = -2;
 		err.syscall = 'open';
 		err.code = 'ENOENT';
-		err.path = src;
+		err.path = "" + src;
 		throw err;
 	};
 
 	/**
-	 * @param {string | Buffer | URL | number} src 
-	 * @param {string | Buffer | URL | number} dest 
+	 * @param {fs.PathLike} src 
+	 * @param {fs.PathLike} dest 
 	 * @param {any} mode
 	 * @param {any} callback
 	 */
@@ -120,23 +111,35 @@ module.exports = (permissionsModel) => {
 	};
 	
 	/**
-	 * @param {string | Buffer | URL | number} src 
-	 * @param {string | Buffer | URL | number} dest 
+	 * @param {fs.PathLike} src 
+	 * @param {fs.PathLike} dest 
 	 * @param {any} mode
 	 * @param {any} callback
 	 */
-	const failCopyFile = (src, dest, mode, callback) => {
+	const normalizeCopyFileArgs = (src, dest, mode, callback) => {
 		if (typeof mode === 'function') {
 			callback = mode;
 			mode = undefined;
 		}
 
-		/** @type {any} err */
+		return {src, dest, mode, callback};
+	};
+
+	/**
+	 * @param {fs.PathLike} src 
+	 * @param {fs.PathLike} dest 
+	 * @param {any} mode
+	 * @param {any} callback
+	 */
+	const failCopyFile = (src, dest, mode, callback) => {
+		({src, dest, mode, callback} = normalizeCopyFileArgs(src, dest, mode, callback));
+
+		/** @type {NodeJS.ErrnoException} err */
 		const err = new Error(`ENOENT: no such file or directory, copyfile '${src}' -> '${dest}'`);
 		err.errno = -2;
 		err.syscall = 'open';
 		err.code = 'ENOENT';
-		err.path = src;
+		err.path = "" + src;
 		callback(err, undefined);
 	};
 
@@ -144,5 +147,4 @@ module.exports = (permissionsModel) => {
 	hookMethod2(fs, 'copyFile', checkCopyFile, failCopyFile);
 	hookMethod2(fs, 'readFileSync', checkReadFileSync, failReadFileSync);
 	hookMethod2(fs, 'copyFileSync', checkCopyFileSync, failCopyFileSync);
-
 };

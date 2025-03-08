@@ -51,20 +51,22 @@ const createPermissions = (p) => {
 	 * @returns {boolean}
 	 */
 	const isExecAllowed = (command, stackTrace) => {
-		if (permissions == null) {
+		if (permissions == null || permissions.permissions == null || permissions.permissions.exec == null) {
 			// no permissions defined, allow all
 			return true;
 		}
 
-		if (permissions.permissions && permissions.permissions.exec && permissions.permissions.exec.allow) {
-			for (const allowedCommand of permissions.permissions.exec.allow) {
-				if (command == allowedCommand) {
-					return true;
-				}
-			}
+		const allowlist = permissions.permissions.exec.allow ? permissions.permissions.exec.allow : [];
+		if (allowlist.length === 0) {
+			// no allowlist defined, deny all by default
+			return false;
+		}
+		
+		if (!allowlist.some(allowedCommand => pathmatch(command, allowedCommand))) {
+			return false;
 		}
 
-		return false;
+		return true;
 	};
 
 	/**

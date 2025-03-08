@@ -61,20 +61,6 @@ const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 		assert.ok(stdout.split('\n').length > 10);
 		assert.ok(stdout.includes('sudo') || stdout.includes("curl"));
 	});
-
-	it('should execute commands via fork', (done) => {
-		const child = childProcess.fork(__dirname + '/helpers/child_process/fork-test.js');
-
-		child.on('message', (msg) => {
-			assert.equal(msg, 'Hello from child');
-			child.kill();
-			done();
-		});
-
-		child.on('error', (err) => {
-			done(err);
-		});
-	});
 });
 
 FUSELOCK_E2E && describe('child_process', () => {
@@ -153,6 +139,7 @@ FUSELOCK_E2E && describe('child_process', () => {
 			done();
 		}
 	});
+
 	it('should block commands via execFileSync (null options)', (done) => {
 		try {
 			childProcess.execFileSync('/bin/ls', ['-l', '/usr/bin']);
@@ -205,4 +192,43 @@ FUSELOCK_E2E && describe('child_process', () => {
 		assert.equal(c.error.message, "spawnSync /bin/ls -1 /usr/bin ENOENT");
 	});
 
+	it('should execute commands via fork', (done) => {
+		const child = childProcess.fork(__dirname + '/helpers/child_process/fork-test.js');
+
+		child.on('message', (msg) => {
+			assert.equal(msg, 'Hello from child');
+			child.kill();
+			done();
+		});
+
+		child.on('error', (err) => {
+			done(err);
+		});
+	});
+
+	it('should block commands via fork', (done) => {
+		const child = childProcess.fork(__dirname + '/helpers/child_process-blocked/fork-test.js');
+		assert.notEqual(child, null);
+		assert.ok(child instanceof childProcess.ChildProcess);
+
+		child.on('error', (err) => {
+			assert.ok(err.message.includes('Cannot find module'), "err.message: " + err.message);
+			done();
+		});
+
+		child.on('exit', (code) => {
+			done(new Error("Expected an error, exit code: " + code));
+		});
+	});
+
+	it('should handle null in fork', (done) => {
+		try {
+			childProcess.fork(null);
+			done(new Error("Expected an error"));
+		} catch (e) {
+			assert.ok(e instanceof Error);
+			assert.ok(e.message.includes(`The "modulePath" argument must be of type string`), "err.message: " + e.message);
+			done();
+		}
+	});
 });

@@ -68,20 +68,6 @@ const hookMethod2 = (object, methodName, check, fail) => {
 };
 
 /**
- * Creates an EventEmitter that emits an error on next tick
- * @param {string} message
- * @returns {EventEmitter}
- */
-const makeSimpleErrorEventEmitter = (message) => {
-	const stream = new EventEmitter();
-	nextTick(() => {
-		stream.emit('error', new Error(message));
-	});
-
-	return stream;
-};
-
-/**
  * @returns {childProcess.ChildProcess}
  */
 const makeEmptyChildProcess = () => {
@@ -140,7 +126,6 @@ module.exports = {
 	getCallingPackages,
 	hookMethod2,
 	getStackTrace,
-	makeSimpleErrorEventEmitter,
 	makeEmptyChildProcessWithError,
 	hookPrototypeMethod,
 	makeEmptyChildProcess,

@@ -21,3 +21,10 @@ export interface PermissionsModel {
 	isHttpRequestAllowed(host: string, stackTrace: NodeJS.CallSite[]): boolean;
 }
 
+export interface ErrnoException extends Error {
+	errno?: number | undefined;
+	code?: string | undefined;
+	path?: string | undefined;
+	syscall?: string | undefined;
+    }
+

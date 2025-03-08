@@ -8,7 +8,7 @@ module.exports = (permissionsModel) => {
 	const {Readable} = require('stream');
 	const childProcess = require('child_process');
 	const {trace} = require("./fuselock-log");
-	const {getStackTrace, getCallingPackages, makeEmptyChildProcess, hookMethod2, makeSimpleErrorEventEmitter, makeEmptyChildProcessWithError} = require("./fuselock-utils");
+	const {getStackTrace, makeEmptyChildProcess, hookMethod2, makeEmptyChildProcessWithError} = require("./fuselock-utils");
 
 	/**
 	 * @param {string} command
@@ -212,6 +212,11 @@ module.exports = (permissionsModel) => {
 	 * @returns {boolean}
 	 */
 	function checkForkAllowed(modulePath) {
+		if (modulePath === null || modulePath === undefined || typeof modulePath !== 'string') {
+			// let the original method throw an exception
+			return true;
+		}
+
 		return permissionsModel.isExecAllowed(modulePath, getStackTrace());
 	}
 
@@ -219,7 +224,7 @@ module.exports = (permissionsModel) => {
 	 * @param {string} modulePath 
 	 */
 	function makeForkError(modulePath) {
-		throw new Error(`[child_process] Blocked fork module: ${modulePath}`);
+		return makeEmptyChildProcessWithError(`Cannot find module "${modulePath}"`, {code: "MODULE_NOT_FOUND"});
 	}
 
 	// child_process.fork(modulePath[, args][, options])
