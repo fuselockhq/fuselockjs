@@ -106,8 +106,23 @@ const wrapPermissions = (permissionsModel) => {
 		return result;
 	};
 
+	/**
+	 * @param {string} path
+	 * @param {NodeJS.CallSite[]} stackTrace
+	 * @returns {boolean}
+	 */
+	const isFileAccessAllowed = (path, stackTrace) => {
+		const result = permissionsModel.isFileAccessAllowed(path, stackTrace);
+
+		// FIXME: creates endless loop
+		// report("fs", stackTrace, result, {path});
+		
+		return result;
+	};
+
 	return {
 		isExecAllowed,
+		isFileAccessAllowed,
 		isHttpRequestAllowed,
 	};
 };

@@ -1,6 +1,9 @@
 /** @typedef {import('./fuselock.d.ts').Permissions} Permissions */
 /** @typedef {import('./fuselock.d.ts').PermissionsModel} PermissionsModel */
 
+const {hostmatch} = require('./fuselock-hostmatch');
+const {pathmatch} = require('./fuselock-pathmatch');
+
 /**
  * @param {Permissions} p
  * @returns PermissionsModel
@@ -8,7 +11,6 @@
 const createPermissions = (p) => {
 
 	const {trace} = require('./fuselock-log');
-	const {hostmatch} = require('./fuselock-hostmatch');
 
 	/** @type Permissions */
 	const permissions = p;
@@ -65,8 +67,42 @@ const createPermissions = (p) => {
 		return false;
 	};
 
+	/**
+	 * @param {string} path
+	 * @param {NodeJS.CallSite[]} stackTrace
+	 * @returns {boolean}
+	 */
+	const isFileAccessAllowed = (path, stackTrace) => {
+		if (permissions == null) {
+			// no permissions defined, allow all
+			return true;
+		}
+
+		if (permissions.permissions.fs == null) {
+			// no fs permissions defined, allow all
+			return true;
+		}
+
+		const allowlist = permissions.permissions.fs.allow || [];
+		const denylist = permissions.permissions.fs.deny || [];
+
+		if (allowlist.some(allow => pathmatch(path, allow))) {
+			return true;
+		}
+
+		for (const deny of denylist) {
+			if (hostmatch(deny, path)) {
+				trace(`File access denied by rule ${deny}`);
+				return false;
+			}
+		}
+
+		return false;
+	};
+
 	return {
 		isExecAllowed,
+		isFileAccessAllowed,
 		isHttpRequestAllowed,
 	};
 };

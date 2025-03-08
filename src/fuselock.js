@@ -19,6 +19,7 @@
 
 	setLogLevel(parseInt(process.env.FUSELOCK_LOGLEVEL || `${LOG_LEVEL_WARN}`));
 
+	const hookFs = require('./fuselock-fs');
 	const hookNet = require('./fuselock-net');
 	// const hookHttp = require('./fuselock-http');
 	// const hookHttps = require('./fuselock-https');
@@ -79,6 +80,27 @@
 				.filter(model => model !== null)
 				.every(model => model.isHttpRequestAllowed(host, stackTrace));
 		},
+
+		/**
+		 * @param {string} _path
+		 * @param {NodeJS.CallSite[]} stackTrace
+		 * @returns {boolean}
+		 */
+		isFileAccessAllowed: (_path, stackTrace) => {
+			if (typeof _path === 'string') {
+				if (_path.endsWith('/fuselock.json')) {
+					return true;
+				}
+			}
+
+			const packages = getCallingPackages(stackTrace);
+			trace("[fuselock] Checking isFileAccessAllowed for " + _path + " with packages " + packages.join(','));
+			return packages
+				.map(package => path.join(package, "fuselock.json"))
+				.map(_path => getPermissionsForPath(_path))
+				.filter(model => model !== null)
+				.every(model => model.isFileAccessAllowed(_path, stackTrace));
+		},
 	};
 
 	const hookModule = () => {
@@ -105,6 +127,9 @@
 
 	// hooking module first, because that's how new modules are loaded
 	hookModule();
+
+	// hook fs
+	hookFs(globalPermissionsModel);
 
 	// hook net, since it's used by http and https
 	hookNet(globalPermissionsModel);

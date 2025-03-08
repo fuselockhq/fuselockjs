@@ -11,6 +11,9 @@
   "author": "fuselock",
   "license": "Apache",
   "description": "",
+  "dependencies": {
+    "minimatch": "^10"
+  },
   "devDependencies": {
     "@types/axios": "^0.9.36",
     "@types/mocha": "^10.0.10",

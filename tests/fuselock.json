@@ -1,6 +1,14 @@
 {
 	"version": 1,
 	"permissions": {
+		"fs": {
+			"allow": [
+				"./**"
+			],
+			"deny": [
+				"/etc/*"
+			]
+		},
 		"http": {
 			"allow": [
 				"*"

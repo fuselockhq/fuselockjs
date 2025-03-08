@@ -146,9 +146,10 @@ module.exports = (permissionsModel) => {
 	 * @param {string} file
 	 * @param {any[]} args
 	 * @param {any} options
-	 * @returns {childProcess.ChildProcess}
+	 * @throws {Error}
 	 */
 	const makeExecFileSyncError = (file, args, options) => {
+		/** @type {any} error */
 		const error = new Error(`${file} ENOENT`);
 		error.code = 'ENOENT';
 		error.errno = -2;
@@ -192,6 +193,7 @@ module.exports = (permissionsModel) => {
 	 */
 	const makeSpawnSyncError = (command, args, options) => {
 		const commandWithArgs = [command, ...args].join(" ");
+		/** @type {any} result */
 		const result = new childProcess.ChildProcess();
 		result.error = new Error(`spawnSync ${commandWithArgs} ENOENT`);
 		result.error.code = "ENOENT";
