@@ -86,8 +86,8 @@ const createPermissions = (p) => {
 		const allowlist = permissions.permissions.fs.allow || [];
 		const denylist = permissions.permissions.fs.deny || [];
 
-		if (allowlist.some(allow => pathmatch(path, allow))) {
-			return true;
+		if (!allowlist.some(allow => pathmatch(path, allow))) {
+			return false;
 		}
 
 		for (const deny of denylist) {
@@ -97,7 +97,7 @@ const createPermissions = (p) => {
 			}
 		}
 
-		return false;
+		return true;
 	};
 
 	return {
