@@ -21,7 +21,7 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 		assert.ok(typeof value === 'undefined');
 	}
 
-	it('should block readFile with callback', (done) => {
+	it('should block readFile', (done) => {
 		const stream = fs.readFile('/etc/passwd', (err, data) => {
 			assert.ok(err !== null);
 			assertFileNotFound(err);
@@ -31,7 +31,7 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 		assert.ok(typeof stream === 'undefined');
 	});
 
-	it('should block readFile with options + callback', (done) => {
+	it('should block readFile with options', (done) => {
 		const stream = fs.readFile('/etc/passwd', {encoding: 'utf8'}, (err, data) => {
 			assert.ok(err !== null);
 			assertUndefined(data);
@@ -52,6 +52,15 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 		}
 	});
 
+	it('should block copyFile', (done) => {
+		fs.copyFile('/etc/passwd', '/tmp/.fuselock-test-file', (err, res) => {
+			assertFileNotFound(err);
+			assertUndefined(res);
+			assert.equal(err.message, "ENOENT: no such file or directory, copyfile '/etc/passwd' -> '/tmp/.fuselock-test-file'");
+			done();
+		});
+	});
+
 	it('should block copyFileSync', (done) => {
 		try {
 			fs.copyFileSync('/etc/passwd', '/tmp/.fuselock-test-file');
@@ -59,6 +68,21 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 		} catch (err) {
 			assertFileNotFound(err);
 			assert.equal(err.message, "ENOENT: no such file or directory, copyfile '/etc/passwd' -> '/tmp/.fuselock-test-file'");
+			done();
+		}
+	});
+
+	it('should handle copyFile with no callback', (done) => {
+		try {
+			fs.copyFile('/etc/passwd', '/tmp/.fuselock-test-file');
+			done(new Error("copyFile should have failed"));
+		} catch (err) {
+			assert.ok(err instanceof Error);
+			if (process.version.startsWith("v14")) {
+				assert.ok(err.message.includes(`Callback must be a function. Received undefined`), "err.message: " + err.message);
+			} else {
+				assert.ok(err.message.includes(`The "cb" argument must be of type function. Received undefined`), "err.message: " + err.message);
+			}
 			done();
 		}
 	});
