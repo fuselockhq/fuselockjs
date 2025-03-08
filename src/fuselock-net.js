@@ -10,7 +10,7 @@ const {nextTick} = require('process');
 module.exports = (permissionsModel) => {
 	const net = require('net');
 	const {trace} = require("./fuselock-log");
-	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
+	const {getStackTrace, hookPrototypeMethod, getNodeMajorVersion} = require("./fuselock-utils");
 
 	/**
 	 * @param {any} arg1
@@ -64,7 +64,7 @@ module.exports = (permissionsModel) => {
 			return permissionsModel.isHttpRequestAllowed(host, getStackTrace());
 		} else {
 			// this is going to fail, pass this through to node to emit the right error
-			if (process.version.startsWith('v14.')) {
+			if (getNodeMajorVersion() < 16) {
 				trace(`[net] connect() called with no arguments on node 14 ❌`);
 				return false;
 			}

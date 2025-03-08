@@ -1,5 +1,6 @@
 const assert = require('assert');
 const fs = require('fs');
+const {getNodeMajorVersion} = require('../src/fuselock-utils');
 
 const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 
@@ -78,7 +79,7 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 			done(new Error("copyFile should have failed"));
 		} catch (err) {
 			assert.ok(err instanceof Error);
-			if (process.version.startsWith("v14")) {
+			if (getNodeMajorVersion() < 18) {
 				assert.ok(err.message.includes(`Callback must be a function. Received undefined`), "err.message: " + err.message);
 			} else {
 				assert.ok(err.message.includes(`The "cb" argument must be of type function. Received undefined`), "err.message: " + err.message);

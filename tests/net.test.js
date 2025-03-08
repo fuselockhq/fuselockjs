@@ -1,6 +1,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const net = require('net');
+const {getNodeMajorVersion} = require('../src/fuselock-utils');
 
 const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 
@@ -65,7 +66,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 	});
 
 	it('should pass through connect with empty options object v14.x', function (done) {
-		if (!process.version.startsWith('v14.')) {
+		if (getNodeMajorVersion() >= 16) {
 			this.skip();
 			done();
 			return;
@@ -81,7 +82,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 	});
 
 	it('should pass through connect with empty options object v16.x', function (done) {
-		if (process.version.startsWith('v14.')) {
+		if (getNodeMajorVersion() < 16) {
 			this.skip();
 			done();
 			return;

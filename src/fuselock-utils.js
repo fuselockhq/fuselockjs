@@ -127,6 +127,15 @@ const hookPrototypeMethod = (prototype, methodName, check, fail) => {
 	};
 };
 
+/**
+ * @returns {number}
+ */
+const getNodeMajorVersion = () => {
+	const versions = process.version.substring(1).split('.');
+	const major = parseInt(versions[0], 10);
+	return major;
+};
+
 module.exports = {
 	getCallingPackages,
 	hookMethod2,
@@ -135,4 +144,5 @@ module.exports = {
 	makeEmptyChildProcessWithError,
 	hookPrototypeMethod,
 	makeEmptyChildProcess,
+	getNodeMajorVersion,
 };
