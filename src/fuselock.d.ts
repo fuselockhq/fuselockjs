@@ -7,6 +7,7 @@ export interface Permissions {
 		},
 		exec?: {
 			allow?: string[];
+			deny?: string[];
 		},
 		http?: {
 			allow?: string[];

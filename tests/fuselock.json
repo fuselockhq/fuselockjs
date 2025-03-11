@@ -2,6 +2,7 @@
 	"version": 1,
 	"permissions": {
 		"fs": {
+			"order": "allow,deny",
 			"allow": [
 				"./**"
 			],
@@ -10,6 +11,7 @@
 			]
 		},
 		"http": {
+			"order": "allow,deny",
 			"allow": [
 				"*"
 			],
@@ -19,6 +21,7 @@
 			]
 		},
 		"exec": {
+			"order": "deny,allow",
 			"allow": [
 				"/bin/echo",
 				"./tests/helpers/child_process/*"

@@ -57,13 +57,23 @@ const createPermissions = (p) => {
 		}
 
 		const allowlist = permissions.permissions.exec.allow ? permissions.permissions.exec.allow : [];
+		const denylist = permissions.permissions.exec.deny ? permissions.permissions.exec.deny : [];
+
 		if (allowlist.length === 0) {
 			// no allowlist defined, deny all by default
 			return false;
 		}
 		
-		if (!allowlist.some(allowedCommand => pathmatch(command, allowedCommand))) {
+		if (!allowlist.some(allow => pathmatch(command, allow))) {
 			return false;
+		}
+
+		for (const deny of denylist) {
+			console.log("gilm deny: " + deny + " and command: " + command);
+			if (pathmatch(command, deny)) {
+				trace(`Command ${command} denied by rule ${deny}`);
+				return false;
+			}
 		}
 
 		return true;

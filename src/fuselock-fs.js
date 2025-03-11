@@ -1,5 +1,7 @@
 /** @typedef {import('./fuselock.d.ts').PermissionsModel} PermissionsModel */
 
+const {nextTick} = require('process');
+
 /**
  * @param {PermissionsModel} permissionsModel
  */
@@ -7,6 +9,25 @@ module.exports = (permissionsModel) => {
 	const fs = require('fs');
 	const {hookMethod2, getStackTrace} = require("./fuselock-utils");
 	const {trace} = require("./fuselock-log");
+	const {Readable} = require('stream');
+
+	/**
+	 * @param {string} message
+	 * @param {string} path
+	 * @param {number} errno
+	 * @param {string} syscall
+	 * @param {string} code
+	 * @returns {NodeJS.ErrnoException}
+	 */
+	const makeErrnoException = (message, path, errno, syscall, code) => {
+		/** @type {NodeJS.ErrnoException} err */
+		const err = new Error(message);
+		err.errno = errno;
+		err.syscall = syscall;
+		err.code = code;
+		err.path = path;
+		return err;
+	};
 
 	/**
 	 * @param {fs.PathLike} path 
@@ -21,13 +42,7 @@ module.exports = (permissionsModel) => {
 	 * @throws {Error}
 	 */
 	const failReadFileSync = (path) => {
-		/** @type {NodeJS.ErrnoException} err */
-		const err = new Error(`ENOENT: no such file or directory, open '${path}'`);
-		err.errno = -2;
-		err.syscall = 'open';
-		err.code = 'ENOENT';
-		err.path = "" + path;
-		throw err;
+		throw makeErrnoException(`ENOENT: no such file or directory, open '${path}'`, "" + path, -2, 'open', 'ENOENT');
 	};
 
 	/**
@@ -52,14 +67,9 @@ module.exports = (permissionsModel) => {
 			options = undefined;
 		}
 
-		/** @type {NodeJS.ErrnoException} err */
-		const err = new Error(`ENOENT: no such file or directory, open '${path}'`);
-		err.errno = -2;
-		err.syscall = 'open';
-		err.code = 'ENOENT';
-		err.path = "" + path;
-
+		const err = makeErrnoException(`ENOENT: no such file or directory, open '${path}'`, "" + path, -2, 'open', 'ENOENT');
 		callback(err, undefined);
+		
 		return undefined;
 	};
 
@@ -78,13 +88,7 @@ module.exports = (permissionsModel) => {
 	 * @throws {Error}
 	 */
 	const failCopyFileSync = (src, dest) => {
-		/** @type {NodeJS.ErrnoException} err */
-		const err = new Error(`ENOENT: no such file or directory, copyfile '${src}' -> '${dest}'`);
-		err.errno = -2;
-		err.syscall = 'open';
-		err.code = 'ENOENT';
-		err.path = "" + src;
-		throw err;
+		throw makeErrnoException(`ENOENT: no such file or directory, copyfile '${src}' -> '${dest}'`, "" + src, -2, 'open', 'ENOENT');
 	};
 
 	/**
@@ -134,17 +138,42 @@ module.exports = (permissionsModel) => {
 	const failCopyFile = (src, dest, mode, callback) => {
 		({src, dest, mode, callback} = normalizeCopyFileArgs(src, dest, mode, callback));
 
-		/** @type {NodeJS.ErrnoException} err */
-		const err = new Error(`ENOENT: no such file or directory, copyfile '${src}' -> '${dest}'`);
-		err.errno = -2;
-		err.syscall = 'open';
-		err.code = 'ENOENT';
-		err.path = "" + src;
+		const err = makeErrnoException(`ENOENT: no such file or directory, copyfile '${src}' -> '${dest}'`, "" + src, -2, 'open', 'ENOENT');
 		callback(err, undefined);
 	};
+
+	/**
+	 * @param {fs.PathLike} path 
+	 * @returns {boolean}
+	 */
+	const checkCreateReadStream = (path) => {
+		return permissionsModel.isFileAccessAllowed("" + path, getStackTrace());
+	};
+
+	/**
+	 * @param {fs.PathLike} path 
+	 * @throws {Error}
+	 */
+	const failCreateReadStream = (path) => {
+		
+		const result = new Readable({
+			read() {
+				// signal end of stream
+				this.push(null); 
+			}
+		});
+		
+		process.nextTick(() => {
+			const error = makeErrnoException(`ENOENT: no such file or directory, open '${path}'`, "" + path, -2, 'open', 'ENOENT');
+			result.emit('error', error);
+		});
+
+		return result;
+	}; 
 
 	hookMethod2(fs, 'readFile', checkReadFile, failReadFile);
 	hookMethod2(fs, 'copyFile', checkCopyFile, failCopyFile);
 	hookMethod2(fs, 'readFileSync', checkReadFileSync, failReadFileSync);
 	hookMethod2(fs, 'copyFileSync', checkCopyFileSync, failCopyFileSync);
+	hookMethod2(fs, 'createReadStream', checkCreateReadStream, failCreateReadStream);
 };

@@ -7,13 +7,12 @@ const {minimatch} = require('minimatch');
  * @returns {boolean}
  */
 const pathmatch = (_path, pattern) => {
-	if (pattern === "*") {
-		return true;
-	}
 
+	// canonicalize path
 	_path = path.resolve(_path);
 
-	if (!path.isAbsolute(pattern)) {
+	if (pattern.startsWith('./')) {
+		// resolve relative pattern
 		pattern = path.resolve(process.cwd(), pattern);
 	}
 
