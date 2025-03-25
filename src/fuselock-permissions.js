@@ -20,14 +20,14 @@ const createPermissions = (p) => {
 	 * @param {NodeJS.CallSite[]} stackTrace
 	 * @returns {boolean}
 	 */
-	const isHttpRequestAllowed = (host, stackTrace) => {
-		if (permissions == null || permissions.permissions == null || permissions.permissions.http == null) {
+	const isNetRequestAllowed = (host, stackTrace) => {
+		if (permissions == null || permissions.permissions == null || permissions.permissions.net == null) {
 			// no permissions defined, allow all
 			return true;
 		}
 
-		const allowlist = permissions.permissions.http.allow || [];
-		const denylist = permissions.permissions.http.deny || [];
+		const allowlist = permissions.permissions.net.allow || [];
+		const denylist = permissions.permissions.net.deny || [];
 		trace("[http] this is the allow list: " + JSON.stringify(allowlist) + " and deny list: " + JSON.stringify(denylist));
 
 		if (!allowlist.some(allow => hostmatch(allow, host))) {
@@ -105,7 +105,7 @@ const createPermissions = (p) => {
 	return {
 		isExecAllowed,
 		isFileAccessAllowed,
-		isHttpRequestAllowed,
+		isNetRequestAllowed,
 	};
 };
 

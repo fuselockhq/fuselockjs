@@ -41,7 +41,7 @@
 		if (fs.existsSync(path)) {
 			const json = JSON.parse(fs.readFileSync(path, "utf8"));
 			const model = createPermissions(json);
-			trace("[fuselock] loaded json from " + path + " into " + JSON.stringify(json));
+			trace("[fuselock] Loaded json from " + path + " into " + JSON.stringify(json));
 			return wrapPermissions(model);
 		}
 
@@ -71,14 +71,14 @@
 		 * @param {NodeJS.CallSite[]} stackTrace
 		 * @returns {boolean}
 		 */
-		isHttpRequestAllowed: (host, stackTrace) => {
+		isNetRequestAllowed: (host, stackTrace) => {
 			const packages = getCallingPackages(stackTrace);
-			trace("[fuselock] Checking isHttpRequestAllowed for " + host + " with packages " + packages.join(','));
+			trace("[fuselock] Checking isNetRequestAllowed for " + host + " with packages " + packages.join(','));
 			return packages
 				.map(package => path.join(package, "fuselock.json"))
 				.map(path => getPermissionsForPath(path))
 				.filter(model => model !== null)
-				.every(model => model.isHttpRequestAllowed(host, stackTrace));
+				.every(model => model.isNetRequestAllowed(host, stackTrace));
 		},
 
 		/**
@@ -89,6 +89,7 @@
 		isFileAccessAllowed: (_path, stackTrace) => {
 			if (typeof _path === 'string') {
 				if (_path.endsWith('/fuselock.json')) {
+					// prevent infinite loop
 					return true;
 				}
 			}

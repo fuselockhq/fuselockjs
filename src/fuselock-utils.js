@@ -1,7 +1,7 @@
 const path = require("path");
 const {EventEmitter} = require("events");
-const {nextTick} = require("process");
 const {Readable} = require('stream');
+const {nextTick} = require('process');
 const childProcess = require('child_process');
 
 /**
@@ -107,8 +107,7 @@ const hookPrototypeMethod = (prototype, methodName, check, fail) => {
 	/** @param {any[]} args */
 	prototype[methodName] = function (...args) {
 		if (!check(this, ...args)) {
-			const result = fail(this, ...args);
-			return result;
+			return fail(this, ...args);
 		}
 
 		return originalMethod.apply(this, args);

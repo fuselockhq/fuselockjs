@@ -5,7 +5,7 @@ describe('permissions', () => {
 	it('permits all operations when no fuselock.json is present', () => {
 		const permissions = createPermissions(null);
 		assert.ok(permissions.isExecAllowed('ls', []));
-		assert.ok(permissions.isHttpRequestAllowed('www.example.com', []));
+		assert.ok(permissions.isNetRequestAllowed('www.example.com', []));
 	});
 
 	it('allows specific exec commands', () => {
@@ -28,7 +28,7 @@ describe('permissions', () => {
 		const permissions = createPermissions({
 			"version": 1,
 			"permissions": {
-				"http": {
+				"net": {
 					"allow": [
 						"*.google.com",
 					],
@@ -39,16 +39,16 @@ describe('permissions', () => {
 			}
 		});
 
-		assert.ok(permissions.isHttpRequestAllowed('ok.google.com', []));
-		assert.ok(!permissions.isHttpRequestAllowed('www.google.com', []));
-		assert.ok(!permissions.isHttpRequestAllowed('google.com', []));
+		assert.ok(permissions.isNetRequestAllowed('ok.google.com', []));
+		assert.ok(!permissions.isNetRequestAllowed('www.google.com', []));
+		assert.ok(!permissions.isNetRequestAllowed('google.com', []));
 	});
 
 	it('allows specific https hosts with star', () => {
 		const permissions = createPermissions({
 			"version": 1,
 			"permissions": {
-				"http": {
+				"net": {
 					"allow": [
 						"*",
 					],
@@ -59,8 +59,8 @@ describe('permissions', () => {
 			}
 		});
 
-		assert.ok(permissions.isHttpRequestAllowed('example.com', []));
-		assert.ok(!permissions.isHttpRequestAllowed('www.google.com', []));
-		assert.ok(permissions.isHttpRequestAllowed('google.com', []));
+		assert.ok(permissions.isNetRequestAllowed('example.com', []));
+		assert.ok(!permissions.isNetRequestAllowed('www.google.com', []));
+		assert.ok(permissions.isNetRequestAllowed('google.com', []));
 	});
 });

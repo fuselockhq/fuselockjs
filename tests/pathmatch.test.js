@@ -11,5 +11,7 @@ describe('pathMatch', () => {
 		assert.ok(pathmatch('/home/user/test.txt', '/home/**'));
 		assert.ok(pathmatch('/home/user/test.txt', '/h*/**'));
 		assert.ok(pathmatch('/home/user/test.txt', '/h*/**/test.txt'));
+
+		assert.ok(!pathmatch('/home/user/test.txt', '*'));
 	});
 });
