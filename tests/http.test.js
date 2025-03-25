@@ -15,7 +15,7 @@ const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 });
 
 FUSELOCK_E2E && describe("http+fuselock", () => {
-	false && it('should succeed http get requests not blocked', (done) => {
+	it('should succeed http get requests not blocked', (done) => {
 		// with fuselock, request to example.com should succeed
 		const r = http.get('http://www.example.com', (res) => {
 			res.resume();

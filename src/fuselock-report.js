@@ -38,16 +38,19 @@ const wrapPermissions = (permissionsModel) => {
 
 	/**
 	 * @param {string} packagePath
-	 * @returns {string}
+	 * @returns {{name: string, version: string}}
 	 */
-	const getPackageVersion = (packagePath) => {
+	const getPackageInfo = (packagePath) => {
 		const packageJsonPath = path.join(packagePath, "package.json");
 		if (!fs.existsSync(packageJsonPath)) {
-			return "";
+			return {name: "", version: ""};
 		}
 
 		const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
-		return packageJson.version;
+		return {
+			name: packageJson.name,
+			version: packageJson.version,
+		};
 	};
 
 	/**
@@ -58,30 +61,34 @@ const wrapPermissions = (permissionsModel) => {
 	 */
 	const report = (name, stackTrace, result, params) => {
 
+		if (!reportFile) {
+			return;
+		}
+	
 		const packages = getCallingPackages(stackTrace);
 		const packagesWithVersions = packages.map(path => {
+			const info = getPackageInfo(path);
 			return {
 				path,
-				version: getPackageVersion(path),
+				name: info.name,
+				version: info.version,
 			};
 		});
 
-		if (reportFile) {
-			const item = {
-				"fuselock-report": {
-					version: 1,
-					timestamp: new Date().toISOString(),
-					name,
-					packages: packagesWithVersions,
-					stacktrace: humanizeStackTrace(stackTrace),
-					result,
-					params,
-				},
-			};
+		const item = {
+			"fuselock-report": {
+				version: 1,
+				timestamp: new Date().toISOString(),
+				name,
+				packages: packagesWithVersions,
+				stacktrace: humanizeStackTrace(stackTrace),
+				result,
+				params,
+			},
+		};
 
-			const data = JSON.stringify(item) + "\n";
-			fs.appendFileSync(reportFile, data);
-		}
+		const data = JSON.stringify(item) + "\n";
+		fs.appendFileSync(reportFile, data);
 	};
 
 	/**
@@ -100,15 +107,30 @@ const wrapPermissions = (permissionsModel) => {
 	 * @param {NodeJS.CallSite[]} stackTrace
 	 * @returns {boolean}
 	 */
-	const isHttpRequestAllowed = (host, stackTrace) => {
-		const result = permissionsModel.isHttpRequestAllowed(host, stackTrace);
+	const isNetRequestAllowed = (host, stackTrace) => {
+		const result = permissionsModel.isNetRequestAllowed(host, stackTrace);
 		report("http", stackTrace, result, {host});
+		return result;
+	};
+
+	/**
+	 * @param {string} path
+	 * @param {NodeJS.CallSite[]} stackTrace
+	 * @returns {boolean}
+	 */
+	const isFileAccessAllowed = (path, stackTrace) => {
+		const result = permissionsModel.isFileAccessAllowed(path, stackTrace);
+		if (!path.endsWith("/package.json")) {
+			report("fs", stackTrace, result, {path});
+		}
+
 		return result;
 	};
 
 	return {
 		isExecAllowed,
-		isHttpRequestAllowed,
+		isFileAccessAllowed,
+		isNetRequestAllowed,
 	};
 };
 

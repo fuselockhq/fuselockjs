@@ -9,11 +9,6 @@ describe('stacktrace', () => {
 		assert.ok(result.length >= 2);
 		assert.equal(result[0].getScriptNameOrSourceURL(), path.resolve(path.join(__dirname, "helpers/stacktrace/inner-stack-trace.js")));
 		assert.equal(result[1].getScriptNameOrSourceURL(), __filename);
-
-		result.forEach(callsite => {
-			/** @type {CallSite} callsite */
-			// console.log(callsite.getScriptNameOrSourceURL());
-		});
 	});
 
 	it('parses calling packages from stack trace', () => {

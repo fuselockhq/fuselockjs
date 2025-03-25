@@ -19,6 +19,7 @@
 
 	setLogLevel(parseInt(process.env.FUSELOCK_LOGLEVEL || `${LOG_LEVEL_WARN}`));
 
+	const hookFs = require('./fuselock-fs');
 	const hookNet = require('./fuselock-net');
 	// const hookHttp = require('./fuselock-http');
 	// const hookHttps = require('./fuselock-https');
@@ -40,7 +41,7 @@
 		if (fs.existsSync(path)) {
 			const json = JSON.parse(fs.readFileSync(path, "utf8"));
 			const model = createPermissions(json);
-			trace("[fuselock] loaded json from " + path + " into " + JSON.stringify(json));
+			trace("[fuselock] Loaded json from " + path + " into " + JSON.stringify(json));
 			return wrapPermissions(model);
 		}
 
@@ -70,14 +71,36 @@
 		 * @param {NodeJS.CallSite[]} stackTrace
 		 * @returns {boolean}
 		 */
-		isHttpRequestAllowed: (host, stackTrace) => {
+		isNetRequestAllowed: (host, stackTrace) => {
 			const packages = getCallingPackages(stackTrace);
-			trace("[fuselock] Checking isHttpRequestAllowed for " + host + " with packages " + packages.join(','));
+			trace("[fuselock] Checking isNetRequestAllowed for " + host + " with packages " + packages.join(','));
 			return packages
 				.map(package => path.join(package, "fuselock.json"))
 				.map(path => getPermissionsForPath(path))
 				.filter(model => model !== null)
-				.every(model => model.isHttpRequestAllowed(host, stackTrace));
+				.every(model => model.isNetRequestAllowed(host, stackTrace));
+		},
+
+		/**
+		 * @param {string} _path
+		 * @param {NodeJS.CallSite[]} stackTrace
+		 * @returns {boolean}
+		 */
+		isFileAccessAllowed: (_path, stackTrace) => {
+			if (typeof _path === 'string') {
+				if (_path.endsWith('/fuselock.json')) {
+					// prevent infinite loop
+					return true;
+				}
+			}
+
+			const packages = getCallingPackages(stackTrace);
+			trace("[fuselock] Checking isFileAccessAllowed for " + _path + " with packages " + packages.join(','));
+			return packages
+				.map(package => path.join(package, "fuselock.json"))
+				.map(_path => getPermissionsForPath(_path))
+				.filter(model => model !== null)
+				.every(model => model.isFileAccessAllowed(_path, stackTrace));
 		},
 	};
 
@@ -105,6 +128,9 @@
 
 	// hooking module first, because that's how new modules are loaded
 	hookModule();
+
+	// hook fs
+	hookFs(globalPermissionsModel);
 
 	// hook net, since it's used by http and https
 	hookNet(globalPermissionsModel);

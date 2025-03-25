@@ -1,8 +1,8 @@
 const assert = require('assert');
-const { AsyncLocalStorage } = require('async_hooks');
+const {AsyncLocalStorage} = require('async_hooks');
 
 const asyncLocalStorage = new AsyncLocalStorage();
-const { getStackTrace } = require("../src/fuselock-utils");
+const {getStackTrace} = require("../src/fuselock-utils");
 
 const _getStackTrace = () => {
 	const previousStack = asyncLocalStorage.getStore();
@@ -46,9 +46,9 @@ describe('async stack trace', () => {
 					dummy();
 
 					const functions = stackTrace
-					.map(callsite => callsite.getFunctionName())
-					.filter(functionName => functionName != null)
-					.filter(functionName => functionName.startsWith("callback") || functionName.startsWith("dummy"));
+						.map(callsite => callsite.getFunctionName())
+						.filter(functionName => functionName != null)
+						.filter(functionName => functionName.startsWith("callback") || functionName.startsWith("dummy"));
 
 					assert.deepEqual(functions, ["dummy", "callback3", "callback2", "callback1"]);
 

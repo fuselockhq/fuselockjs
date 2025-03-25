@@ -8,7 +8,8 @@ module.exports = (permissionsModel) => {
 	const {Readable} = require('stream');
 	const childProcess = require('child_process');
 	const {trace} = require("./fuselock-log");
-	const {getStackTrace, getCallingPackages, makeEmptyChildProcess, hookMethod2, makeSimpleErrorEventEmitter, makeEmptyChildProcessWithError} = require("./fuselock-utils");
+	const {getStackTrace, makeEmptyChildProcess, hookMethod2, makeEmptyChildProcessWithError} = require("./fuselock-utils");
+	const {parseCommand} = require("./fuselock-command-parser");
 
 	/**
 	 * @param {string} command
@@ -20,7 +21,7 @@ module.exports = (permissionsModel) => {
 			return true;
 		}
 
-		const commandArguments = command.split(" ");
+		const commandArguments = parseCommand(command);
 		const executable = commandArguments[0];
 		return permissionsModel.isExecAllowed(executable, getStackTrace());
 	};
@@ -103,7 +104,7 @@ module.exports = (permissionsModel) => {
 		let executable = file;
 		if (options.shell) {
 			// if shell is true, then we need to parse out the executable from the command
-			const commandArguments = file.split(" ");
+			const commandArguments = parseCommand(file);
 			executable = commandArguments[0];
 		}
 
@@ -146,9 +147,10 @@ module.exports = (permissionsModel) => {
 	 * @param {string} file
 	 * @param {any[]} args
 	 * @param {any} options
-	 * @returns {childProcess.ChildProcess}
+	 * @throws {Error}
 	 */
 	const makeExecFileSyncError = (file, args, options) => {
+		/** @type {any} error */
 		const error = new Error(`${file} ENOENT`);
 		error.code = 'ENOENT';
 		error.errno = -2;
@@ -192,6 +194,7 @@ module.exports = (permissionsModel) => {
 	 */
 	const makeSpawnSyncError = (command, args, options) => {
 		const commandWithArgs = [command, ...args].join(" ");
+		/** @type {any} result */
 		const result = new childProcess.ChildProcess();
 		result.error = new Error(`spawnSync ${commandWithArgs} ENOENT`);
 		result.error.code = "ENOENT";
@@ -210,6 +213,11 @@ module.exports = (permissionsModel) => {
 	 * @returns {boolean}
 	 */
 	function checkForkAllowed(modulePath) {
+		if (modulePath === null || modulePath === undefined || typeof modulePath !== 'string') {
+			// let the original method throw an exception
+			return true;
+		}
+
 		return permissionsModel.isExecAllowed(modulePath, getStackTrace());
 	}
 
@@ -217,7 +225,7 @@ module.exports = (permissionsModel) => {
 	 * @param {string} modulePath 
 	 */
 	function makeForkError(modulePath) {
-		throw new Error(`[child_process] Blocked fork module: ${modulePath}`);
+		return makeEmptyChildProcessWithError(`Cannot find module "${modulePath}"`, {code: "MODULE_NOT_FOUND"});
 	}
 
 	// child_process.fork(modulePath[, args][, options])

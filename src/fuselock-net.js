@@ -10,7 +10,7 @@ const {nextTick} = require('process');
 module.exports = (permissionsModel) => {
 	const net = require('net');
 	const {trace} = require("./fuselock-log");
-	const {getStackTrace, hookPrototypeMethod} = require("./fuselock-utils");
+	const {getStackTrace, hookPrototypeMethod, getNodeMajorVersion} = require("./fuselock-utils");
 
 	/**
 	 * @param {any} arg1
@@ -20,8 +20,8 @@ module.exports = (permissionsModel) => {
 	const normalizeConnectArgs = (arg1, arg2) => {
 
 		if (Array.isArray(arg1)) {
-			arg2 = arg1[1];
-			arg1 = arg1[0];	
+			// in node 14, the first argument is actually the array of arguments
+			[arg1, arg2] = arg1;
 		}
 
 		let host = null;
@@ -61,10 +61,10 @@ module.exports = (permissionsModel) => {
 			trace(`[net] Connecting to IPC path: ${path} ❌`);
 			return false;
 		} else if (host) {
-			return permissionsModel.isHttpRequestAllowed(host, getStackTrace());
+			return permissionsModel.isNetRequestAllowed(host, getStackTrace());
 		} else {
 			// this is going to fail, pass this through to node to emit the right error
-			if (process.version.startsWith('v14.')) {
+			if (getNodeMajorVersion() < 16) {
 				trace(`[net] connect() called with no arguments on node 14 ❌`);
 				return false;
 			}
@@ -95,6 +95,7 @@ module.exports = (permissionsModel) => {
 				error.syscall = 'getaddrinfo';
 				error.hostname = host;
 				thisArg.destroy(error);
+
 			});
 		} else {
 			// can only happen on node 14

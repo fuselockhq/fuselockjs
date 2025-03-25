@@ -1,7 +1,7 @@
 const path = require("path");
 const {EventEmitter} = require("events");
-const {nextTick} = require("process");
 const {Readable} = require('stream');
+const {nextTick} = require('process');
 const childProcess = require('child_process');
 
 /**
@@ -23,6 +23,8 @@ const getCallingPackages = (stackTrace) => {
 			if (p >= 0) {
 				// this source file is part of a module, we'll return the path to the (nested) node_modules
 				return items.slice(0, p + 2).join(path.sep);
+			} else if (sourceUrl.startsWith("file://")) {
+				return path.dirname(sourceUrl.slice("file://".length));
 			} else {
 				// this source file is just a file on disk (for example an index.js or a test script loaded)
 				return path.dirname(sourceUrl);
@@ -68,20 +70,6 @@ const hookMethod2 = (object, methodName, check, fail) => {
 };
 
 /**
- * Creates an EventEmitter that emits an error on next tick
- * @param {string} message
- * @returns {EventEmitter}
- */
-const makeSimpleErrorEventEmitter = (message) => {
-	const stream = new EventEmitter();
-	nextTick(() => {
-		stream.emit('error', new Error(message));
-	});
-
-	return stream;
-};
-
-/**
  * @returns {childProcess.ChildProcess}
  */
 const makeEmptyChildProcess = () => {
@@ -117,22 +105,30 @@ const makeEmptyChildProcessWithError = (message, extra) => {
 const hookPrototypeMethod = (prototype, methodName, check, fail) => {
 	const originalMethod = prototype[methodName];
 	/** @param {any[]} args */
-	prototype[methodName] = function(...args) {
+	prototype[methodName] = function (...args) {
 		if (!check(this, ...args)) {
-			const result = fail(this, ...args);
-			return result;
+			return fail(this, ...args);
 		}
 
 		return originalMethod.apply(this, args);
 	};
 };
 
+/**
+ * @returns {number}
+ */
+const getNodeMajorVersion = () => {
+	const versions = process.version.substring(1).split('.');
+	const major = parseInt(versions[0], 10);
+	return major;
+};
+
 module.exports = {
 	getCallingPackages,
 	hookMethod2,
 	getStackTrace,
-	makeSimpleErrorEventEmitter,
 	makeEmptyChildProcessWithError,
 	hookPrototypeMethod,
 	makeEmptyChildProcess,
+	getNodeMajorVersion,
 };
