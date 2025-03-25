@@ -23,6 +23,8 @@ const getCallingPackages = (stackTrace) => {
 			if (p >= 0) {
 				// this source file is part of a module, we'll return the path to the (nested) node_modules
 				return items.slice(0, p + 2).join(path.sep);
+			} else if (sourceUrl.startsWith("file://")) {
+				return path.dirname(sourceUrl.slice("file://".length));
 			} else {
 				// this source file is just a file on disk (for example an index.js or a test script loaded)
 				return path.dirname(sourceUrl);
@@ -103,7 +105,7 @@ const makeEmptyChildProcessWithError = (message, extra) => {
 const hookPrototypeMethod = (prototype, methodName, check, fail) => {
 	const originalMethod = prototype[methodName];
 	/** @param {any[]} args */
-	prototype[methodName] = function(...args) {
+	prototype[methodName] = function (...args) {
 		if (!check(this, ...args)) {
 			const result = fail(this, ...args);
 			return result;
