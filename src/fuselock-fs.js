@@ -1,5 +1,7 @@
 /** @typedef {import('./fuselock.d.ts').PermissionsModel} PermissionsModel */
 
+const {nextTick} = require('process');
+
 /**
  * @param {PermissionsModel} permissionsModel
  */
@@ -68,7 +70,6 @@ module.exports = (permissionsModel) => {
 
 		const err = makeErrnoException(`ENOENT: no such file or directory, open '${path}'`, "" + path, -2, 'open', 'ENOENT');
 		callback(err, undefined);
-
 		return undefined;
 	};
 
@@ -154,7 +155,6 @@ module.exports = (permissionsModel) => {
 	 * @throws {Error}
 	 */
 	const failCreateReadStream = (path) => {
-
 		const result = new Readable({
 			read() {
 				// signal end of stream
