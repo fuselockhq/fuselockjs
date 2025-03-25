@@ -9,6 +9,7 @@ module.exports = (permissionsModel) => {
 	const childProcess = require('child_process');
 	const {trace} = require("./fuselock-log");
 	const {getStackTrace, makeEmptyChildProcess, hookMethod2, makeEmptyChildProcessWithError} = require("./fuselock-utils");
+	const {parseCommand} = require("./fuselock-command-parser");
 
 	/**
 	 * @param {string} command
@@ -20,7 +21,7 @@ module.exports = (permissionsModel) => {
 			return true;
 		}
 
-		const commandArguments = command.split(" ");
+		const commandArguments = parseCommand(command);
 		const executable = commandArguments[0];
 		return permissionsModel.isExecAllowed(executable, getStackTrace());
 	};
@@ -103,7 +104,7 @@ module.exports = (permissionsModel) => {
 		let executable = file;
 		if (options.shell) {
 			// if shell is true, then we need to parse out the executable from the command
-			const commandArguments = file.split(" ");
+			const commandArguments = parseCommand(file);
 			executable = commandArguments[0];
 		}
 
