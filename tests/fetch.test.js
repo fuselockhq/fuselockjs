@@ -38,7 +38,6 @@ NODE_18 && FUSELOCK_E2E && describe("fetch+fuselock", () => {
 				done(new Error("request was supposed to fail"));
 			})
 			.catch(err => {
-				console.log("Successfully blocked fetch get request");
 				assert.ok(err instanceof Error);
 				assert.equal("fetch failed", err.message);
 				assert.ok(err.cause instanceof Error);

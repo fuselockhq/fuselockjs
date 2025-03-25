@@ -69,7 +69,6 @@ const createPermissions = (p) => {
 		}
 
 		for (const deny of denylist) {
-			console.log("gilm deny: " + deny + " and command: " + command);
 			if (pathmatch(command, deny)) {
 				trace(`Command ${command} denied by rule ${deny}`);
 				return false;
