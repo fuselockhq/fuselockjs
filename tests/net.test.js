@@ -4,6 +4,8 @@ const net = require('net');
 const {getNodeMajorVersion} = require('../src/fuselock-utils');
 
 const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
+const NODE_16 = getNodeMajorVersion() >= 16;
+const HAS_USBMUXD = fs.existsSync("/var/run/usbmuxd");
 
 !FUSELOCK_E2E && describe('net', () => {
 	it('should succeed net socket connections', (done) => {
@@ -30,14 +32,7 @@ const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 		socket.on('error', done);
 	});
 
-	it('should succeed local IPC connections', function (done) {
-		// FIXME: when running under linux, we need to run socat to create a unix domain socket
-		if (!fs.existsSync("/var/run/usbmuxd")) {
-			this.skip();
-			done();
-			return;
-		}
-
+	HAS_USBMUXD && it('should succeed local IPC connections', function (done) {
 		const socket = new net.Socket();
 		socket.connect('/var/run/usbmuxd', () => {
 			socket.end();
@@ -65,13 +60,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 		socket.on('error', (err) => done(err));
 	});
 
-	it('should pass through connect with empty options object v14.x', function (done) {
-		if (getNodeMajorVersion() >= 16) {
-			this.skip();
-			done();
-			return;
-		}
-
+	!NODE_16 && it('should pass through connect with empty options object v14.x', function (done) {
 		const socket = new net.Socket();
 		socket
 			.connect({})
@@ -81,13 +70,7 @@ FUSELOCK_E2E && describe("net+fuselock", () => {
 			});
 	});
 
-	it('should pass through connect with empty options object v16.x', function (done) {
-		if (getNodeMajorVersion() < 16) {
-			this.skip();
-			done();
-			return;
-		}
-
+	NODE_16 && it('should pass through connect with empty options object v16.x', function (done) {
 		const socket = new net.Socket();
 		try {
 			socket.connect({});

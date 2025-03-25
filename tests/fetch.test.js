@@ -1,8 +1,10 @@
 const assert = require('assert');
+const {getNodeMajorVersion} = require('../src/fuselock-utils');
 
 const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
+const NODE_18 = getNodeMajorVersion() >= 18;
 
-!FUSELOCK_E2E && describe('fetch', () => {
+NODE_18 && !FUSELOCK_E2E && describe('fetch', () => {
 	it('should succeed fetch requests ', (done) => {
 		// without fuselock, request to google.com should succeed
 		fetch('http://www.google.com')
@@ -16,7 +18,7 @@ const FUSELOCK_E2E = parseInt(process.env.FUSELOCK_E2E || "0");
 	});
 });
 
-FUSELOCK_E2E && describe("fetch+fuselock", () => {
+NODE_18 && FUSELOCK_E2E && describe("fetch+fuselock", () => {
 	it('should succeed fetch requests not blocked', (done) => {
 		// with fuselock, request to example.com should succeed
 		fetch('http://www.example.com')
