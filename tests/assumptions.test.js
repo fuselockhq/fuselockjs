@@ -2,6 +2,11 @@ const assert = require('assert');
 const http = require('http');
 const https = require('https');
 
+/** 
+ * These tests here make sure that our assumptions about nodejs api are valid. For example,
+ * instead of hooking http.request and https.request methods (and their variants), we make sure
+ * that all supported versions of nodejs have their http.request implementation call net.Socket.connect.
+ */
 describe('assumptions', () => {
 
 	it('should verify that http.request calls net.Socket.connect', (done) => {

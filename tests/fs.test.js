@@ -62,6 +62,17 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 		});
 	});
 
+	it('should allow copyFileSync on allowed path', (done) => {
+		try {
+			fs.copyFileSync(__filename, '/tmp/.fuselock-test-file');
+			done();
+		} catch (err) {
+			done(new Error("copyFileSync should have succeeded"));
+		} finally {
+			fs.unlinkSync('/tmp/.fuselock-test-file');
+		}
+	});
+
 	it('should block copyFileSync', (done) => {
 		try {
 			fs.copyFileSync('/etc/passwd', '/tmp/.fuselock-test-file');
@@ -86,5 +97,28 @@ FUSELOCK_E2E && describe("fs+fuselock", () => {
 			}
 			done();
 		}
+	});
+
+	it('should allow createReadStream on allowed path', (done) => {
+		const stream = fs.createReadStream(__filename);
+		stream.on('error', (err) => {
+			done(new Error("createReadStream should not have failed"));
+		});
+
+		stream.on('open', () => {
+			done();
+		});
+	});
+
+	it('should block createReadStream', (done) => {
+		const stream = fs.createReadStream('/etc/passwd');
+		stream.on('error', (err) => {
+			assertFileNotFound(err);
+			done();
+		});
+
+		stream.on('open', () => {
+			done(new Error("createReadStream should have failed"));
+		});
 	});
 });
