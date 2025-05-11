@@ -16,14 +16,13 @@ const matchstar = (pattern, input) => {
  * @returns {number}
  */
 const defaultPort = (protocol) => {
-	switch (protocol) {
-		case "http":
-			return 80;
-		case "https":
-			return 443;
-		default:
-			return -1;
-	}
+	/** @type {{[key: string]: number}} */
+	const ports = {
+		http: 80,
+		https: 443,
+	};
+
+	return ports[protocol] || -1;
 };
 
 /**
