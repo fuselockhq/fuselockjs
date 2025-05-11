@@ -10,13 +10,13 @@ const childProcess = require('child_process');
  */
 const getCallingPackages = (stackTrace) => {
 	return stackTrace
-		// remove getCallingPackages()
-		// .slice(1)
+		// convert callsite to script name or source url
 		.map(callSite => callSite.getScriptNameOrSourceURL())
 		// remove anonymous code
 		.filter(sourceUrl => sourceUrl != null)
 		// remove internal packages
 		.filter(sourceUrl => !sourceUrl.startsWith("node:") && !sourceUrl.startsWith("internal/"))
+		// convert to path on disk
 		.map(sourceUrl => {
 			const items = sourceUrl.split(path.sep);
 			const p = items.lastIndexOf("node_modules");
