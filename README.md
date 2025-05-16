@@ -1,10 +1,10 @@
 <div align="center">
   <h1>fuselock</h1>
-  <h3>🔒 A Node.js Runtime Security Layer</h3>
+  <h3>🔒 Node.js Runtime Security - No more zero Days</h3>
   <h4>Secure your Node.js applications by intercepting and restricting OS operations at runtime</h4>
 
-  [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14-brightgreen)](https://nodejs.org)
-  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+  [![Node.js Version](https://img.shields.io/badge/node-%3E%3D14-brightgreen)](https://www.npmjs.com/package/@fuselockhq/fuselockjs)
+  [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/fuselockhq/fuselockjs/pulls)
 
 </div>
 
@@ -12,10 +12,13 @@
 
 ## What is fuselock?
 
-fuselock is a Node.js library that lets you intercept and restrict operating system operations at runtime. Think of it as a Docker-like security layer but at the JavaScript level. It provides a configuration-driven mechanism to define:
+fuselock is a Node.js library that lets you intercept and restrict operating system operations at runtime. 
+It secures your application against vulnerabilities even before they are discovered. We help to protect you from all the latest CVEs.
+Think of it as a Docker-like security layer, but at the JavaScript level. It provides a configuration-driven mechanism to define:
 
 - 🌐 Which network operations are allowed
 - ⚡ Which process invocations can be executed
+
 
 ## Installation
 
