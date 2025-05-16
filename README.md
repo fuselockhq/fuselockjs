@@ -101,6 +101,6 @@ See `LICENSE` for more information.
 
 ## Support
 
-- 📚 [Documentation](https://github.com/fuselock/fuselockjs/wiki)
-- 🐛 [Issue Tracker](https://github.com/fuselock/fuselockjs/issues)
-- 💬 [Community Discussions](https://github.com/fuselock/fuselockjs/discussions)
+- 📚 [Documentation](https://github.com/fuselockhq/fuselockjs/wiki)
+- 🐛 [Issue Tracker](https://github.com/fuselockhq/fuselockjs/issues)
+- 💬 [Community Discussions](https://github.com/fuselockhq/fuselockjs/discussions)
