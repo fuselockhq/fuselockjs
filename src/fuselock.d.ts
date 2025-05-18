@@ -1,21 +1,21 @@
 
-export type ORDER = "allow,deny" | "deny,allow";
+export type RULE_ORDER = "allow,deny" | "deny,allow";
 
 export interface Permissions {
 	version: number;
 	permissions: {
 		fs?: {
-			order: ORDER;
+			order: RULE_ORDER;
 			allow?: string[];
 			deny?: string[];
 		},
 		exec?: {
-			order: ORDER;
+			order: RULE_ORDER;
 			allow?: string[];
 			deny?: string[];
 		},
 		net?: {
-			order: ORDER;
+			order: RULE_ORDER;
 			allow?: string[];
 			deny?: string[];
 		}
@@ -33,5 +33,5 @@ export interface ErrnoException extends Error {
 	code?: string | undefined;
 	path?: string | undefined;
 	syscall?: string | undefined;
-    }
+}
 
