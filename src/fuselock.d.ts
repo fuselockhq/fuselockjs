@@ -1,23 +1,15 @@
 
-export type RULE_ORDER = "allow,deny" | "deny,allow";
-
 export interface Permissions {
 	version: number;
 	permissions: {
 		fs?: {
-			order: RULE_ORDER;
-			allow?: string[];
-			deny?: string[];
+			rules: string[];
 		},
 		exec?: {
-			order: RULE_ORDER;
-			allow?: string[];
-			deny?: string[];
+			rules: string[];
 		},
 		net?: {
-			order: RULE_ORDER;
-			allow?: string[];
-			deny?: string[];
+			rules: string[];
 		}
 	}
 }

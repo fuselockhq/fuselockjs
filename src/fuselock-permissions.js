@@ -19,53 +19,46 @@ const createPermissions = (p) => {
 
 	/**
 	 * @param {string} subject
-	 * @param {string[]} allowlist
-	 * @param {string[]} denylist
-	 * @param {string} order
+	 * @param {string[]} rules
 	 * @param {(pattern: string, input: string) => boolean} matcher
 	 * @returns {boolean}
 	 */
-	const isAllowed = (subject, allowlist, denylist, order, matcher) => {
-		if (order === "allow,deny") {
-			if (allowlist.some(allow => matcher(allow, subject))) {
-				// at least one rule allows this. now we check if any deny it
-				for (const deny of denylist) {
-					if (matcher(deny, subject)) {
-						trace(`${subject} denied by rule ${deny}`);
-						return false;
-					}
-				}
+	const isAllowed = (subject, rules, matcher) => {
+		for (const rule of rules) {
 
-				trace(`${subject} allowed by ${allowlist}`);
+			const action = rule.split(" ")[0];
+			const pattern = rule.split(" ")[1];
+
+			if (action === "allow" && pattern === "all") {
+				trace(`${subject} allowed by rule ${rule}`);
 				return true;
 			}
-
-			// default is false
-			trace(`${subject} denied by default`);
-			return false;
-		}
-
-		if (order === "deny,allow") {
-			if (denylist.some(deny => matcher(deny, subject))) {
-				// at least one rule denies this. now we check if any allow it
-				for (const allow of allowlist) {
-					if (matcher(allow, subject)) {
-						trace(`${subject} allowed by rule ${allow}`);
-						return true;
-					}
-				}
-
-				trace(`${subject} denied by ${denylist}`);
+			
+			if (action === "deny" && pattern === "all") {
+				trace(`${subject} denied by rule ${rule}`);
 				return false;
 			}
 
-			// default is true
-			trace(`${subject} allowed by default`);
-			return true;
+			if (action === "allow") {
+				if (matcher(pattern, subject)) {
+					trace(`${subject} allowed by rule ${rule}`);
+					return true;
+				}
+			}
+
+			if (action === "deny") {
+				if (matcher(pattern, subject)) {
+					trace(`${subject} denied by rule ${rule}`);
+					return false;
+				}
+			}
+
+			// continue to the next rule
 		}
 
-		trace(`Invalid order ${order} defined, denying request for ${subject}`);
-		return false;
+		// default is false
+		trace(`${subject} allowed by default`);
+		return true;
 	};
 
 	/**
@@ -79,12 +72,10 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		const order = permissions.permissions.net.order || DEFAULT_ORDER;
-		const allowlist = permissions.permissions.net.allow || [];
-		const denylist = permissions.permissions.net.deny || [];
-		trace(`[net] inspecting host ${host} with order: ${order}, allow list: ${JSON.stringify(allowlist)}, deny list: ${JSON.stringify(denylist)}`);
+		const rules = permissions.permissions.net.rules || [];
+		trace(`[net] inspecting host ${host} with rules: ${JSON.stringify(rules)}`);
 
-		return isAllowed(host, allowlist, denylist, order, hostmatch);
+		return isAllowed(host, rules, hostmatch);
 	};
 
 	/**
@@ -98,10 +89,8 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		const order = permissions.permissions.exec.order || DEFAULT_ORDER;
-		const allowlist = permissions.permissions.exec.allow ? permissions.permissions.exec.allow : [];
-		const denylist = permissions.permissions.exec.deny ? permissions.permissions.exec.deny : [];
-		trace(`[exec] inspecting command ${command} with order: ${order}, allow list: ${JSON.stringify(allowlist)}, deny list: ${JSON.stringify(denylist)}`);
+		const rules = permissions.permissions.exec.rules || [];
+		trace(`[exec] inspecting command ${command} with rules: ${JSON.stringify(rules)}`);
 
 		/**
 		 * @param {string} pattern
@@ -112,7 +101,7 @@ const createPermissions = (p) => {
 			return pathmatch(path, pattern);
 		};
 
-		return isAllowed(command, allowlist, denylist, order, _pathmatch);
+		return isAllowed(command, rules, _pathmatch);
 	};
 
 	/**
@@ -126,10 +115,8 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		const order = permissions.permissions.fs.order || DEFAULT_ORDER;
-		const allowlist = permissions.permissions.fs.allow || [];
-		const denylist = permissions.permissions.fs.deny || [];
-		trace(`[fs] inspecting path ${path} with order: ${order}, allow list: ${JSON.stringify(allowlist)}, deny list: ${JSON.stringify(denylist)}`);
+		const rules = permissions.permissions.fs.rules || [];
+		trace(`[fs] inspecting path ${path} with rules: ${JSON.stringify(rules)}`);
 
 		/**
 		 * @param {string} pattern
@@ -139,8 +126,8 @@ const createPermissions = (p) => {
 		const _pathmatch = (pattern, path) => {
 			return pathmatch(path, pattern);
 		};
-		
-		return isAllowed(path, allowlist, denylist, order, _pathmatch);
+
+		return isAllowed(path, rules, _pathmatch);
 	};
 
 	return {
