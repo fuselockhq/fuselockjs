@@ -2,29 +2,23 @@
 	"version": 1,
 	"permissions": {
 		"fs": {
-			"order": "allow,deny",
-			"allow": [
-				"./**"
-			],
-			"deny": [
-				"/etc/*"
+			"rules": [
+				"deny /etc/*",
+				"allow all"
 			]
 		},
 		"net": {
-			"order": "allow,deny",
-			"allow": [
-				"*"
-			],
-			"deny": [
-				"google.com",
-				"www.google.com"
+			"rules": [
+				"deny google.com",
+				"deny www.google.com",
+				"allow all"
 			]
 		},
 		"exec": {
-			"order": "deny,allow",
-			"allow": [
-				"/bin/echo",
-				"./tests/helpers/child_process/*"
+			"rules": [
+				"allow /bin/echo",
+				"allow ./tests/helpers/child_process/*",
+				"deny all"
 			]
 		}
 	}

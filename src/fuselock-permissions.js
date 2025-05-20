@@ -15,6 +15,52 @@ const createPermissions = (p) => {
 	/** @type Permissions */
 	const permissions = p;
 
+	const DEFAULT_ORDER = "allow,deny";
+
+	/**
+	 * @param {string} subject
+	 * @param {string[]} rules
+	 * @param {(pattern: string, input: string) => boolean} matcher
+	 * @returns {boolean}
+	 */
+	const isAllowed = (subject, rules, matcher) => {
+		for (const rule of rules) {
+
+			const action = rule.split(" ")[0];
+			const pattern = rule.split(" ")[1];
+
+			if (action === "allow" && pattern === "all") {
+				trace(`${subject} allowed by rule ${rule}`);
+				return true;
+			}
+			
+			if (action === "deny" && pattern === "all") {
+				trace(`${subject} denied by rule ${rule}`);
+				return false;
+			}
+
+			if (action === "allow") {
+				if (matcher(pattern, subject)) {
+					trace(`${subject} allowed by rule ${rule}`);
+					return true;
+				}
+			}
+
+			if (action === "deny") {
+				if (matcher(pattern, subject)) {
+					trace(`${subject} denied by rule ${rule}`);
+					return false;
+				}
+			}
+
+			// continue to the next rule
+		}
+
+		// default is false
+		trace(`${subject} allowed by default`);
+		return true;
+	};
+
 	/**
 	 * @param {string} host
 	 * @param {NodeJS.CallSite[]} stackTrace
@@ -26,23 +72,10 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		const allowlist = permissions.permissions.net.allow || [];
-		const denylist = permissions.permissions.net.deny || [];
-		trace("[http] this is the allow list: " + JSON.stringify(allowlist) + " and deny list: " + JSON.stringify(denylist));
+		const rules = permissions.permissions.net.rules || [];
+		trace(`[net] inspecting host ${host} with rules: ${JSON.stringify(rules)}`);
 
-		if (!allowlist.some(allow => hostmatch(allow, host))) {
-			trace(`Host ${host} denied because there is not a single permission to allow this`);
-			return false;
-		}
-
-		for (const deny of denylist) {
-			if (hostmatch(deny, host)) {
-				trace(`Host ${host} denied by rule ${deny}`);
-				return false;
-			}
-		}
-
-		return true;
+		return isAllowed(host, rules, hostmatch);
 	};
 
 	/**
@@ -56,26 +89,19 @@ const createPermissions = (p) => {
 			return true;
 		}
 
-		const allowlist = permissions.permissions.exec.allow ? permissions.permissions.exec.allow : [];
-		const denylist = permissions.permissions.exec.deny ? permissions.permissions.exec.deny : [];
+		const rules = permissions.permissions.exec.rules || [];
+		trace(`[exec] inspecting command ${command} with rules: ${JSON.stringify(rules)}`);
 
-		if (allowlist.length === 0) {
-			// no allowlist defined, deny all by default
-			return false;
-		}
-		
-		if (!allowlist.some(allow => pathmatch(command, allow))) {
-			return false;
-		}
+		/**
+		 * @param {string} pattern
+		 * @param {string} path
+		 * @returns {boolean}
+		 */
+		const _pathmatch = (pattern, path) => {
+			return pathmatch(path, pattern);
+		};
 
-		for (const deny of denylist) {
-			if (pathmatch(command, deny)) {
-				trace(`Command ${command} denied by rule ${deny}`);
-				return false;
-			}
-		}
-
-		return true;
+		return isAllowed(command, rules, _pathmatch);
 	};
 
 	/**
@@ -84,31 +110,24 @@ const createPermissions = (p) => {
 	 * @returns {boolean}
 	 */
 	const isFileAccessAllowed = (path, stackTrace) => {
-		if (permissions == null) {
+		if (permissions == null || permissions.permissions == null || permissions.permissions.fs == null) {
 			// no permissions defined, allow all
 			return true;
 		}
 
-		if (permissions.permissions.fs == null) {
-			// no fs permissions defined, allow all
-			return true;
-		}
+		const rules = permissions.permissions.fs.rules || [];
+		trace(`[fs] inspecting path ${path} with rules: ${JSON.stringify(rules)}`);
 
-		const allowlist = permissions.permissions.fs.allow || [];
-		const denylist = permissions.permissions.fs.deny || [];
+		/**
+		 * @param {string} pattern
+		 * @param {string} path
+		 * @returns {boolean}
+		 */
+		const _pathmatch = (pattern, path) => {
+			return pathmatch(path, pattern);
+		};
 
-		if (!allowlist.some(allow => pathmatch(path, allow))) {
-			return false;
-		}
-
-		for (const deny of denylist) {
-			if (hostmatch(deny, path)) {
-				trace(`File access denied by rule ${deny}`);
-				return false;
-			}
-		}
-
-		return true;
+		return isAllowed(path, rules, _pathmatch);
 	};
 
 	return {

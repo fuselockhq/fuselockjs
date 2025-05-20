@@ -13,8 +13,9 @@ describe('permissions', () => {
 			"version": 1,
 			"permissions": {
 				"exec": {
-					"allow": [
-						"/bin/echo"
+					"rules": [
+						"allow /bin/echo",
+						"deny all"
 					]
 				}
 			}
@@ -29,11 +30,10 @@ describe('permissions', () => {
 			"version": 1,
 			"permissions": {
 				"net": {
-					"allow": [
-						"*.google.com",
-					],
-					"deny": [
-						"www.google.com",
+					"rules": [
+						"deny www.google.com",
+						"allow *.google.com",
+						"deny all"
 					]
 				}
 			}
@@ -42,18 +42,17 @@ describe('permissions', () => {
 		assert.ok(permissions.isNetRequestAllowed('ok.google.com', []));
 		assert.ok(!permissions.isNetRequestAllowed('www.google.com', []));
 		assert.ok(!permissions.isNetRequestAllowed('google.com', []));
+		assert.ok(!permissions.isNetRequestAllowed('www.example.com', []));
 	});
 
 	it('allows specific https hosts with star', () => {
 		const permissions = createPermissions({
-			"version": 1,
-			"permissions": {
-				"net": {
-					"allow": [
-						"*",
-					],
-					"deny": [
-						"www.google.com",
+			version: 1,
+			permissions: {
+				net: {
+					"rules": [
+						"deny www.google.com",
+						"allow *",
 					]
 				}
 			}
